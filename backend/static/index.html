@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Aggregator | Özel Ders Talep Paneli</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.321.0/dist/umd/lucide-react.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .active-filter { background: #6366f1; color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .lead-card:hover { transform: translateY(-4px); transition: all 0.3s ease; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Defensive Lucide Access
+        const icons = window.lucide || { 
+            Search: () => "🔍", Filter: () => "📁", MapPin: () => "📍", 
+            Clock: () => "🕒", ExternalLink: () => "🔗", GraduationCap: () => "🎓",
+            MessageSquare: () => "💬"
+        };
+        const { Search, Filter, MapPin, Clock, ExternalLink, GraduationCap, MessageSquare } = icons;
+
+        const App = () => {
+            const [leads, setLeads] = useState([]);
+            const [filter, setFilter] = useState('Hepsi');
+            const [search, setSearch] = useState('');
+            const [loading, setLoading] = useState(true);
+            const [scanning, setScanning] = useState(false);
+
+            const fetchLeads = () => {
+                setLoading(true);
+                fetch('/api/leads')
+                    .then(res => res.json())
+                    .then(data => {
+                        setLeads(data.data || []);
+                        setLoading(false);
+                    });
+            };
+
+            const triggerScan = async () => {
+                setScanning(true);
+                try {
+                    const res = await fetch('/api/scan', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        alert(data.message || "Tarama tamamlandı!");
+                    } else {
+                        alert("Hata: " + (data.message || "Bilinmeyen bir sorun oluştu."));
+                    }
+                    fetchLeads(); 
+                } catch (e) {
+                    alert("Sunucuya bağlanılamadı: " + e.message);
+                } finally {
+                    setScanning(false);
+                }
+            };
+
+            useEffect(() => {
+                fetchLeads();
+            }, []);
+
+            const filteredLeads = leads.filter(l => {
+                const platformMatch = 
+                    filter === 'Hepsi' || 
+                    l.platform === filter || 
+                    (filter === 'Google' && l.platform === 'Google / Web') ||
+                    (filter === 'Facebook' && l.platform.includes('Facebook')) ||
+                    (filter === 'Forum' && (l.platform === 'DonanımHaber' || l.platform === 'Forum')) ||
+                    l.subject === filter;
+                    
+                const searchMatch = 
+                    l.content.toLowerCase().includes(search.toLowerCase()) || 
+                    (l.subject && l.subject.toLowerCase().includes(search.toLowerCase()));
+                    
+                return platformMatch && searchMatch;
+            });
+
+            return (
+                <div class="flex flex-col md:flex-row min-h-screen">
+                    {/* Sidebar */}
+                    <aside class="w-full md:w-72 glass p-6 flex flex-col gap-8 sticky top-0 h-screen hidden md:flex">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-indigo-500 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
+                                <GraduationCap size={24} class="text-white" />
+                            </div>
+                            <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Antigravity Leads</h1>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label class="text-xs font-semibold text-slate-400 uppercase tracking-widest block mb-4">Platformlar</label>
+                                <div class="flex flex-col gap-2">
+                                    {['Hepsi', 'Facebook', 'Instagram', 'Twitter', 'Sahibinden', 'Forum', 'Google', 'Armut'].map(p => (
+                                        <button 
+                                            key={p}
+                                            onClick={() => setFilter(p)}
+                                            class={`text-left px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium ${filter === p ? 'active-filter' : 'text-slate-300 hover:bg-slate-800'}`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
+                            <p class="text-xs text-indigo-300 font-medium">Toplam Talep</p>
+                            <p class="text-2xl font-bold text-white">{leads.length}</p>
+                        </div>
+                    </aside>
+
+                    {/* Main Content */}
+                    <main class="flex-1 p-6 md:p-10 space-y-8 max-w-7xl mx-auto w-full">
+                        {/* Header */}
+                        <header class="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                            <div class="relative w-full md:w-96">
+                                <Search class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input 
+                                    type="text" 
+                                    placeholder="Ders veya şehir ara..." 
+                                    class="w-full bg-slate-800/50 border border-slate-700/50 py-3 pl-12 pr-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                                <p class="text-[10px] text-slate-500 mt-1.5 ml-2 font-medium italic">
+                                    💡 Konu ve içerik bazlı stabil arama aktif.
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <button 
+                                    onClick={triggerScan}
+                                    disabled={scanning}
+                                    class={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm tracking-wide transition-all shadow-xl ${scanning ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 active:scale-95'}`}
+                                >
+                                    {scanning ? "Botlar Taranıyor..." : "🔍 Şimdi Tara"}
+                                </button>
+                                <span class="bg-emerald-500/10 text-emerald-400 px-4 py-3 rounded-2xl border border-emerald-500/20 text-xs font-bold">Bugün</span>
+                            </div>
+                        </header>
+
+                        {/* Leads Feed */}
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {loading ? (
+                                <div class="col-span-full py-20 text-center text-slate-500 animate-pulse">Yükleniyor...</div>
+                            ) : filteredLeads.length > 0 ? (
+                                filteredLeads.map(lead => (
+                                    <div key={lead.id} class="glass p-6 rounded-3xl lead-card group cursor-default">
+                                        <div class="flex justify-between items-start mb-4">
+                                            <div class="flex items-center gap-2">
+                                                <span class="bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md border border-indigo-500/20">
+                                                    {lead.subject}
+                                                </span>
+                                                <span class="text-slate-500 text-[10px] flex items-center gap-1 font-medium italic">
+                                                    {lead.platform} üzerinden
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 text-slate-400 text-xs font-medium">
+                                                <Clock size={12} />
+                                                {lead.original_date}
+                                            </div>
+                                        </div>
+                                        <p class="text-slate-200 text-lg leading-relaxed mb-6 font-medium">
+                                            "{lead.content}"
+                                        </p>
+                                        <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                                            <div class="flex flex-col gap-2">
+                                                <span class="flex items-center gap-1.5 text-slate-400 text-xs">
+                                                    <MapPin size={14} /> {lead.location}
+                                                </span>
+                                                {lead.contact_info ? (
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <span class="flex items-center gap-1.5 text-emerald-400 text-[13px] font-bold bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20">
+                                                            <MessageSquare size={14} /> {lead.contact_info}
+                                                        </span>
+                                                        {lead.whatsapp_link && (
+                                                            <a href={lead.whatsapp_link} target="_blank" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-xl transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
+                                                                WhatsApp'tan Yaz
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span class="text-slate-500 text-[11px] italic">İletişim bilgisi aranıyor...</span>
+                                                )}
+                                            </div>
+                                            <a href={lead.original_link} target="_blank" class="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
+                                                İlana Git <ExternalLink size={14} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div class="col-span-full py-20 text-center text-slate-500">Talep bulunamadı.</div>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

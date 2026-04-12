@@ -1,0 +1,28 @@
+[
+  {
+    "domain": ".facebook.com",
+    "expirationDate": 1797262172.463659,
+    "hostOnly": false,
+    "httpOnly": true,
+    "name": "xs",
+    "path": "/",
+    "sameSite": "no_restriction",
+    "secure": true,
+    "session": false,
+    "storeId": "0",
+    "value": "BURAYA_XS_DEGERINI_YAPISTIRIN"
+  },
+  {
+    "domain": ".facebook.com",
+    "expirationDate": 1797262172.463581,
+    "hostOnly": false,
+    "httpOnly": false,
+    "name": "c_user",
+    "path": "/",
+    "sameSite": "no_restriction",
+    "secure": true,
+    "session": false,
+    "storeId": "0",
+    "value": "BURAYA_USER_ID_YAPISTIRIN"
+  }
+]
