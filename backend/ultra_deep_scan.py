@@ -16,6 +16,8 @@ import html as html_lib
 import json
 import time
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 if os.name == 'nt':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
@@ -113,7 +115,7 @@ async def _scrape_google(page, query, seen_hashes, default_platform):
     """Try Google search"""
     results = []
     encoded = urllib.parse.quote(query)
-    url = f"https://www.google.com/search?q={encoded}&hl=tr&num=20"
+    url = f"https://www.google.com/search?q={encoded}&hl=tr&num=20&tbs=qdr:m"
     
     await page.goto(url, wait_until="domcontentloaded", timeout=15000)
     await asyncio.sleep(2)
@@ -163,7 +165,7 @@ async def _scrape_bing(page, query, seen_hashes, default_platform):
     """Bing search"""
     results = []
     encoded = urllib.parse.quote(query)
-    url = f"https://www.bing.com/search?q={encoded}&setlang=tr"
+    url = f"https://www.bing.com/search?q={encoded}&setlang=tr&qft=interval%3d%2230%22"
     
     await page.goto(url, wait_until="domcontentloaded", timeout=15000)
     await asyncio.sleep(2)
@@ -201,7 +203,7 @@ async def _scrape_yandex(page, query, seen_hashes, default_platform):
     """Yandex search - great for Turkish content"""
     results = []
     encoded = urllib.parse.quote(query)
-    url = f"https://yandex.com/search/?text={encoded}&lr=983"
+    url = f"https://yandex.com/search/?text={encoded}&lr=983&within=8"
     
     await page.goto(url, wait_until="domcontentloaded", timeout=15000)
     await asyncio.sleep(2)
@@ -271,6 +273,38 @@ def load_fb_cookies():
                 return sanitized
         except Exception as e:
             print(f"⚠️ Cookie sanitizing error: {e}")
+    return None
+
+def load_ig_cookies():
+    """Load and sanitize Instagram session cookies from file if exists"""
+    cookie_path = os.path.join(os.path.dirname(__file__), "auth", "instagram_cookies.json")
+    if os.path.exists(cookie_path):
+        try:
+            with open(cookie_path, 'r') as f:
+                cookies = json.load(f)
+                sanitized = []
+                for c in cookies:
+                    if "BURAYA_" in str(c.get("value", "")):
+                        continue
+                    
+                    ss = c.get("sameSite", "None")
+                    if ss.lower() in ["no_restriction", "unspecified"]:
+                        c["sameSite"] = "None"
+                    elif ss[0].upper() + ss[1:].lower() in ["Strict", "Lax", "None"]:
+                        c["sameSite"] = ss[0].upper() + ss[1:].lower()
+                    else:
+                        c["sameSite"] = "None"
+                    
+                    for key in ["hostOnly", "session", "storeId", "expirationDate"]:
+                        if key in c:
+                            if key == "expirationDate":
+                                c["expires"] = c.pop(key)
+                            else:
+                                c.pop(key)
+                    sanitized.append(c)
+                return sanitized
+        except Exception as e:
+            print(f"⚠️ IG Cookie sanitizing error: {e}")
     return None
 
 async def _scrape_fb_feed(page, seen_hashes):
@@ -377,6 +411,13 @@ async def run_ultra_deep_scan():
             await context.add_cookies(fb_cookies)
         else:
             print(f"   ℹ️ Facebook çerezleri bulunamadı. Sadece halka açık gruplar taranacak.")
+            
+        ig_cookies = load_ig_cookies()
+        if ig_cookies:
+            print(f"   🔑 Instagram çerezleri yüklendi! ({len(ig_cookies)} cookie)")
+            await context.add_cookies(ig_cookies)
+        else:
+            print(f"   ℹ️ Instagram çerezleri bulunamadı. Sadece halka açık gönderiler taranacak.")
             
         page = await context.new_page()
         
@@ -602,7 +643,7 @@ def export_results():
     
     print(f"\n📁 CSV: {csv_path}")
     print(f"📊 Toplam kayıt: {len(all_leads)}")
-    print(f"💡 Panel: http://localhost:8080")
+    print(f"💡 Panel: http://localhost:8081")
 
 
 if __name__ == "__main__":

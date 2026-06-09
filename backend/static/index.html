@@ -3,207 +3,661 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead Aggregator | Özel Ders Talep Paneli</title>
+    <title>Özel Ders Lead Paneli | Antigravity</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide-react@0.321.0/dist/umd/lucide-react.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Outfit', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .active-filter { background: #6366f1; color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-        .lead-card:hover { transform: translateY(-4px); transition: all 0.3s ease; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
+        * { font-family: 'Inter', sans-serif; }
+
+        body {
+            background: #f0f4ff;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: #ffffff;
+            border-right: 1px solid #e8edf5;
+            box-shadow: 4px 0 24px rgba(99,102,241,0.06);
+        }
+
+        /* Platform butonları */
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.18s ease;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        .filter-btn:hover { background: #f1f5ff; color: #4f46e5; }
+        .filter-btn.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+        }
+        .filter-btn .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.5;
+            flex-shrink: 0;
+        }
+        .filter-btn.active .dot { opacity: 1; background: #fff; }
+
+        /* Kart */
+        .lead-card {
+            background: #ffffff;
+            border: 1px solid #e8edf5;
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.22s ease;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+        .lead-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(99,102,241,0.12);
+            border-color: #c7d2fe;
+        }
+
+        /* Platform badge renkleri */
+        .badge-fb     { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .badge-ig     { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
+        .badge-web    { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-forum  { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+        .badge-eksi   { background: #fefce8; color: #854d0e; border: 1px solid #fde68a; }
+        .badge-dh     { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .badge-def    { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+        /* Konu etiketi */
+        .subject-chip {
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        /* Arama */
+        .search-box {
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 11px 16px 11px 44px;
+            font-size: 14px;
+            color: #1e293b;
+            width: 100%;
+            transition: border 0.18s;
+            outline: none;
+        }
+        .search-box:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+
+        /* Tara butonu */
+        .scan-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 11px 24px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+            transition: all 0.18s;
+            white-space: nowrap;
+        }
+        .scan-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(99,102,241,0.45); }
+        .scan-btn:active { transform: scale(0.97); }
+        .scan-btn:disabled { background: #e2e8f0; color: #94a3b8; box-shadow: none; cursor: not-allowed; transform: none; }
+
+        /* WA butonu */
+        .wa-btn {
+            background: #22c55e;
+            color: white;
+            border-radius: 10px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.18s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .wa-btn:hover { background: #16a34a; transform: scale(1.03); }
+
+        /* İlan git linki */
+        .goto-link {
+            color: #6366f1;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.03em;
+            transition: color 0.15s;
+        }
+        .goto-link:hover { color: #4338ca; }
+
+        /* Stat kartı */
+        .stat-card {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 16px;
+            padding: 18px 20px;
+            color: white;
+        }
+
+        /* Pulse animasyon */
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+        .animate-pulse { animation: pulse 1.5s infinite; }
+
+        /* Header gradient */
+        .header-bar {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+            border-radius: 20px;
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            color: white;
+        }
+
+        /* Divider */
+        .divider { height: 1px; background: #e8edf5; margin: 8px 0; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
     </style>
 </head>
-<body class="min-h-screen overflow-x-hidden">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-        
-        // Defensive Lucide Access
-        const icons = window.lucide || { 
-            Search: () => "🔍", Filter: () => "📁", MapPin: () => "📍", 
-            Clock: () => "🕒", ExternalLink: () => "🔗", GraduationCap: () => "🎓",
-            MessageSquare: () => "💬"
+
+        const platformColor = (p = '') => {
+            if (p.includes('Facebook'))  return 'badge-fb';
+            if (p.includes('Instagram')) return 'badge-ig';
+            if (p.includes('DonanımHaber')) return 'badge-dh';
+            if (p.includes('Ekşi'))      return 'badge-eksi';
+            if (p.includes('Forum') || p.includes('memurlar') || p.includes('r10') || p.includes('shift')) return 'badge-forum';
+            if (p.includes('Google') || p.includes('Web')) return 'badge-web';
+            return 'badge-def';
         };
-        const { Search, Filter, MapPin, Clock, ExternalLink, GraduationCap, MessageSquare } = icons;
+
+        const platformIcon = (p = '') => {
+            if (p.includes('Facebook'))  return '📘';
+            if (p.includes('Instagram')) return '📸';
+            if (p.includes('Twitter'))   return '🐦';
+            if (p.includes('DonanımHaber')) return '💬';
+            if (p.includes('Ekşi'))      return '🟡';
+            if (p.includes('Sahibinden')) return '🏠';
+            return '🌐';
+        };
+
+        const PLATFORMS = [
+            { label: 'Tümü',         key: 'Hepsi' },
+            { label: 'Facebook',     key: 'Facebook' },
+            { label: 'Instagram',    key: 'Instagram' },
+            { label: 'Web',          key: 'Google' },
+            { label: 'DonanımHaber', key: 'Forum' },
+            { label: 'Ekşi Sözlük', key: 'Ekşi' },
+            { label: 'Sahibinden',   key: 'Sahibinden' },
+        ];
 
         const App = () => {
-            const [leads, setLeads] = useState([]);
-            const [filter, setFilter] = useState('Hepsi');
-            const [search, setSearch] = useState('');
-            const [loading, setLoading] = useState(true);
+            const [leads, setLeads]       = useState([]);
+            const [filter, setFilter]     = useState('Hepsi');
+            const [search, setSearch]     = useState('');
+            const [loading, setLoading]   = useState(true);
             const [scanning, setScanning] = useState(false);
+            const [toast, setToast]       = useState(null);
+
+            // Settings views & status
+            const [currentView, setCurrentView] = useState('dashboard');
+            const [settings, setSettings]       = useState({ facebook: { connected: false }, instagram: { connected: false } });
+            const [fbCookiesInput, setFbCookiesInput] = useState('');
+            const [igCookiesInput, setIgCookiesInput] = useState('');
+            const [savingSettings, setSavingSettings] = useState(false);
+
+            const fetchSettings = () => {
+                fetch('/api/settings')
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.status === 'success') {
+                            setSettings(d.data);
+                        }
+                    })
+                    .catch(() => {});
+            };
+
+            const handleSaveCookies = async (platform, cookiesText) => {
+                if (!cookiesText.trim()) {
+                    showToast('Lütfen geçerli bir JSON çerez verisi yapıştırın.', 'error');
+                    return;
+                }
+                setSavingSettings(true);
+                try {
+                    const res = await fetch('/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ platform, cookies: cookiesText })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        showToast(data.message);
+                        fetchSettings();
+                        if (platform === 'facebook') setFbCookiesInput('');
+                        if (platform === 'instagram') setIgCookiesInput('');
+                    } else {
+                        showToast(data.message || 'Kaydedilirken bir hata oluştu.', 'error');
+                    }
+                } catch {
+                    showToast('Sunucuya bağlanılamadı.', 'error');
+                } finally {
+                    setSavingSettings(false);
+                }
+            };
+
+            const showToast = (msg, type='success') => {
+                setToast({ msg, type });
+                setTimeout(() => setToast(null), 3500);
+            };
 
             const fetchLeads = () => {
                 setLoading(true);
                 fetch('/api/leads')
-                    .then(res => res.json())
-                    .then(data => {
-                        setLeads(data.data || []);
-                        setLoading(false);
-                    });
+                    .then(r => r.json())
+                    .then(d => { setLeads(d.data || []); setLoading(false); })
+                    .catch(() => setLoading(false));
+            };
+
+            const checkStatus = () => {
+                fetch('/api/status')
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.is_scanning) {
+                            setScanning(true);
+                            setTimeout(checkStatus, 3000);
+                        } else {
+                            setScanning(wasScanning => {
+                                if (wasScanning) {
+                                    showToast('Tarama tamamlandı! Yeni ilanlar yüklendi.');
+                                    fetchLeads();
+                                }
+                                return false;
+                            });
+                        }
+                    })
+                    .catch(() => {});
             };
 
             const triggerScan = async () => {
                 setScanning(true);
                 try {
-                    const res = await fetch('/api/scan', { method: 'POST' });
+                    const res  = await fetch('/api/scan', { method: 'POST' });
                     const data = await res.json();
                     if (data.status === 'success') {
-                        alert(data.message || "Tarama tamamlandı!");
+                        showToast(data.message || 'Tarama başlatıldı...');
+                        setTimeout(checkStatus, 3000);
                     } else {
-                        alert("Hata: " + (data.message || "Bilinmeyen bir sorun oluştu."));
+                        showToast(data.message || 'Bir hata oluştu.', 'error');
+                        setScanning(false);
                     }
-                    fetchLeads(); 
-                } catch (e) {
-                    alert("Sunucuya bağlanılamadı: " + e.message);
-                } finally {
+                } catch(e) {
+                    showToast('Sunucuya bağlanılamadı.', 'error');
                     setScanning(false);
                 }
             };
 
             useEffect(() => {
                 fetchLeads();
+                checkStatus();
+                fetchSettings();
             }, []);
 
-            const filteredLeads = leads.filter(l => {
-                const platformMatch = 
-                    filter === 'Hepsi' || 
-                    l.platform === filter || 
-                    (filter === 'Google' && l.platform === 'Google / Web') ||
-                    (filter === 'Facebook' && l.platform.includes('Facebook')) ||
-                    (filter === 'Forum' && (l.platform === 'DonanımHaber' || l.platform === 'Forum')) ||
-                    l.subject === filter;
-                    
-                const searchMatch = 
-                    l.content.toLowerCase().includes(search.toLowerCase()) || 
-                    (l.subject && l.subject.toLowerCase().includes(search.toLowerCase()));
-                    
+            const renderSettingsView = () => {
+                return (
+                    <div style={{maxWidth: 800}}>
+                        <h1 style={{fontSize: 28, fontWeight: 800, color: '#1e293b', marginBottom: 6}}>Hesap Bağlantıları & Ayarlar</h1>
+                        <p style={{color: '#64748b', fontSize: 14, marginBottom: 28}}>
+                            Oturum gerektiren veya bot engeli bulunan platformları kendi hesabınızla taratmak için çerez (cookie) ayarlarını buradan yapabilirsiniz.
+                        </p>
+                        
+                        <div style={{display:'flex', flexDirection:'column', gap: 24}}>
+                            
+                            {/* Facebook Settings */}
+                            <div style={{background: '#ffffff', borderRadius: 20, padding: 24, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)'}}>
+                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 16}}>
+                                    <div style={{display:'flex', alignItems:'center', gap: 10}}>
+                                        <span style={{fontSize: 24}}>📘</span>
+                                        <div>
+                                            <h3 style={{fontSize: 16, fontWeight: 700, color: '#1e293b', margin: 0}}>Facebook Hesabı</h3>
+                                            <p style={{fontSize: 12, color: '#94a3b8', margin: 0}}>Özel grupları ve akışı taramak için kullanılır</p>
+                                        </div>
+                                    </div>
+                                    <span style={{
+                                        background: settings.facebook.connected ? '#f0fdf4' : '#fef2f2',
+                                        color: settings.facebook.connected ? '#16a34a' : '#dc2626',
+                                        border: `1px solid ${settings.facebook.connected ? '#bbf7d0' : '#fecaca'}`,
+                                        borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700
+                                    }}>
+                                        {settings.facebook.connected ? '● Bağlı (Aktif)' : '● Bağlı Değil'}
+                                    </span>
+                                </div>
+                                
+                                <div style={{background: '#f8fafc', borderRadius: 12, padding: 14, fontSize: 13, color: '#475569', marginBottom: 16, borderLeft: '4px solid #6366f1'}}>
+                                    <strong>💡 Facebook Nasıl Bağlanır?</strong>
+                                    <ol style={{margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.6}}>
+                                        <li>Tarayıcınızda <strong>facebook.com</strong>'a gidip giriş yapın.</li>
+                                        <li>Chrome Web Store'dan <strong>Cookie-Editor</strong> eklentisini indirin.</li>
+                                        <li>Facebook sekmesindeyken eklenti simgesine basıp alt kısımdaki <strong>"Export JSON"</strong> butonuna tıklayın.</li>
+                                        <li>Kopyalanan çerezleri aşağıdaki kutuya yapıştırın ve Kaydet deyin.</li>
+                                    </ol>
+                                </div>
+                                
+                                <textarea
+                                    style={{width: '100%', minHeight: 120, background: '#fcfdfe', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: 12, fontSize: 12, fontFamily: 'monospace', outline: 'none', resize: 'vertical'}}
+                                    placeholder="[ { 'name': 'xs', 'value': '...' }, ... ] biçimindeki JSON çerez kodunu buraya yapıştırın"
+                                    value={fbCookiesInput}
+                                    onChange={e => setFbCookiesInput(e.target.value)}
+                                />
+                                
+                                <div style={{display:'flex', justifyContent:'flex-end', marginTop: 12}}>
+                                    <button
+                                        className="scan-btn"
+                                        disabled={savingSettings}
+                                        onClick={() => handleSaveCookies('facebook', fbCookiesInput)}
+                                        style={{padding: '8px 20px', fontSize: 13}}
+                                    >
+                                        {savingSettings ? 'Kaydediliyor...' : 'Facebook Çerezlerini Kaydet 💾'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Instagram Settings */}
+                            <div style={{background: '#ffffff', borderRadius: 20, padding: 24, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)'}}>
+                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 16}}>
+                                    <div style={{display:'flex', alignItems:'center', gap: 10}}>
+                                        <span style={{fontSize: 24}}>📸</span>
+                                        <div>
+                                            <h3 style={{fontSize: 16, fontWeight: 700, color: '#1e293b', margin: 0}}>Instagram Hesabı</h3>
+                                            <p style={{fontSize: 12, color: '#94a3b8', margin: 0}}>Instagram gönderilerini ve aramalarını taramak için kullanılır</p>
+                                        </div>
+                                    </div>
+                                    <span style={{
+                                        background: settings.instagram.connected ? '#f0fdf4' : '#fef2f2',
+                                        color: settings.instagram.connected ? '#16a34a' : '#dc2626',
+                                        border: `1px solid ${settings.instagram.connected ? '#bbf7d0' : '#fecaca'}`,
+                                        borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700
+                                    }}>
+                                        {settings.instagram.connected ? '● Bağlı (Aktif)' : '● Bağlı Değil'}
+                                    </span>
+                                </div>
+                                
+                                <div style={{background: '#f8fafc', borderRadius: 12, padding: 14, fontSize: 13, color: '#475569', marginBottom: 16, borderLeft: '4px solid #ec4899'}}>
+                                    <strong>💡 Instagram Nasıl Bağlanır?</strong>
+                                    <ol style={{margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.6}}>
+                                        <li>Tarayıcınızda <strong>instagram.com</strong>'a gidip giriş yapın.</li>
+                                        <li>Chrome Web Store'dan <strong>Cookie-Editor</strong> eklentisini indirin.</li>
+                                        <li>Instagram sekmesindeyken eklenti simgesine basıp alt kısımdaki <strong>"Export JSON"</strong> butonuna tıklayın.</li>
+                                        <li>Kopyalanan çerezleri aşağıdaki kutuya yapıştırın ve Kaydet deyin.</li>
+                                    </ol>
+                                </div>
+                                
+                                <textarea
+                                    style={{width: '100%', minHeight: 120, background: '#fcfdfe', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: 12, fontSize: 12, fontFamily: 'monospace', outline: 'none', resize: 'vertical'}}
+                                    placeholder="[ { 'name': 'sessionid', 'value': '...' }, ... ] biçimindeki JSON çerez kodunu buraya yapıştırın"
+                                    value={igCookiesInput}
+                                    onChange={e => setIgCookiesInput(e.target.value)}
+                                />
+                                
+                                <div style={{display:'flex', justifyContent:'flex-end', marginTop: 12}}>
+                                    <button
+                                        className="scan-btn"
+                                        disabled={savingSettings}
+                                        onClick={() => handleSaveCookies('instagram', igCookiesInput)}
+                                        style={{padding: '8px 20px', fontSize: 13, background: 'linear-gradient(135deg, #ec4899, #be185d)'}}
+                                    >
+                                        {savingSettings ? 'Kaydediliyor...' : 'Instagram Çerezlerini Kaydet 💾'}
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                );
+            };
+
+            const filtered = leads.filter(l => {
+                const p = (l.platform || '').toLowerCase();
+                const platformMatch =
+                    filter === 'Hepsi' ||
+                    (filter === 'Facebook'   && p.includes('facebook')) ||
+                    (filter === 'Instagram'  && p.includes('instagram')) ||
+                    (filter === 'Google'     && (p.includes('google') || p.includes('web'))) ||
+                    (filter === 'Forum'      && (p.includes('donanimhaber') || p.includes('forum'))) ||
+                    (filter === 'Ekşi'       && p.includes('ekşi')) ||
+                    (filter === 'Sahibinden' && p.includes('sahibinden'));
+
+                const q = search.toLowerCase();
+                const searchMatch = !q ||
+                    (l.content  || '').toLowerCase().includes(q) ||
+                    (l.subject  || '').toLowerCase().includes(q) ||
+                    (l.location || '').toLowerCase().includes(q);
+
                 return platformMatch && searchMatch;
             });
 
+            // Platform sayıları
+            const counts = {};
+            leads.forEach(l => {
+                const p = (l.platform || '').toLowerCase();
+                if (p.includes('facebook'))     counts['Facebook']     = (counts['Facebook']     || 0) + 1;
+                else if (p.includes('instagram')) counts['Instagram']  = (counts['Instagram']    || 0) + 1;
+                else if (p.includes('google') || p.includes('web')) counts['Google'] = (counts['Google'] || 0) + 1;
+                else if (p.includes('donanimhaber')) counts['Forum']   = (counts['Forum']        || 0) + 1;
+                else if (p.includes('ekşi'))    counts['Ekşi']         = (counts['Ekşi']         || 0) + 1;
+                else if (p.includes('sahibinden')) counts['Sahibinden']= (counts['Sahibinden']   || 0) + 1;
+            });
+
             return (
-                <div class="flex flex-col md:flex-row min-h-screen">
-                    {/* Sidebar */}
-                    <aside class="w-full md:w-72 glass p-6 flex flex-col gap-8 sticky top-0 h-screen hidden md:flex">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-indigo-500 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
-                                <GraduationCap size={24} class="text-white" />
-                            </div>
-                            <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Antigravity Leads</h1>
-                        </div>
+                <div style={{display:'flex', minHeight:'100vh'}}>
 
-                        <div class="space-y-6">
+                    {/* ===== SIDEBAR ===== */}
+                    <aside className="sidebar" style={{width:260, flexShrink:0, display:'flex', flexDirection:'column', padding:'28px 16px', gap:8, position:'sticky', top:0, height:'100vh', overflowY:'auto'}}>
+
+                        {/* Logo */}
+                        <div style={{display:'flex', alignItems:'center', gap:10, padding:'0 8px 20px'}}>
+                            <div style={{background:'linear-gradient(135deg,#6366f1,#8b5cf6)', borderRadius:12, width:38, height:38, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, boxShadow:'0 4px 12px rgba(99,102,241,0.35)'}}>🎓</div>
                             <div>
-                                <label class="text-xs font-semibold text-slate-400 uppercase tracking-widest block mb-4">Platformlar</label>
-                                <div class="flex flex-col gap-2">
-                                    {['Hepsi', 'Facebook', 'Instagram', 'Twitter', 'Sahibinden', 'Forum', 'Google', 'Armut'].map(p => (
-                                        <button 
-                                            key={p}
-                                            onClick={() => setFilter(p)}
-                                            class={`text-left px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium ${filter === p ? 'active-filter' : 'text-slate-300 hover:bg-slate-800'}`}
-                                        >
-                                            {p}
-                                        </button>
-                                    ))}
-                                </div>
+                                <div style={{fontWeight:800, fontSize:15, color:'#1e293b', lineHeight:1.2}}>Antigravity</div>
+                                <div style={{fontWeight:500, fontSize:11, color:'#94a3b8'}}>Lead Paneli</div>
                             </div>
                         </div>
 
-                        <div class="mt-auto p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
-                            <p class="text-xs text-indigo-300 font-medium">Toplam Talep</p>
-                            <p class="text-2xl font-bold text-white">{leads.length}</p>
+                        <div className="divider" />
+
+                        {/* Platform filtreleri */}
+                        <p style={{fontSize:11, fontWeight:700, color:'#94a3b8', letterSpacing:'0.08em', textTransform:'uppercase', padding:'12px 8px 6px'}}>Platformlar</p>
+
+                        {PLATFORMS.map(({label, key}) => (
+                            <button
+                                key={key}
+                                className={`filter-btn ${currentView === 'dashboard' && filter === key ? 'active' : ''}`}
+                                onClick={() => { setFilter(key); setCurrentView('dashboard'); }}
+                            >
+                                <span className="dot"></span>
+                                {label}
+                                {key !== 'Hepsi' && counts[key] ? (
+                                    <span style={{marginLeft:'auto', background: (currentView === 'dashboard' && filter===key) ? 'rgba(255,255,255,0.25)' : '#eef2ff', color: (currentView === 'dashboard' && filter===key) ? '#fff' : '#6366f1', borderRadius:20, padding:'1px 8px', fontSize:11, fontWeight:700}}>
+                                        {counts[key]}
+                                    </span>
+                                ) : key === 'Hepsi' ? (
+                                    <span style={{marginLeft:'auto', background: (currentView === 'dashboard' && filter===key) ? 'rgba(255,255,255,0.25)' : '#eef2ff', color: (currentView === 'dashboard' && filter===key) ? '#fff' : '#6366f1', borderRadius:20, padding:'1px 8px', fontSize:11, fontWeight:700}}>
+                                        {leads.length}
+                                    </span>
+                                ) : null}
+                            </button>
+                        ))}
+
+                        <button
+                            className={`filter-btn ${currentView === 'settings' ? 'active' : ''}`}
+                            onClick={() => setCurrentView('settings')}
+                            style={{marginTop: 8}}
+                        >
+                            <span className="dot"></span>
+                            ⚙️ Ayarlar
+                        </button>
+
+                        <div className="divider" style={{marginTop:'auto'}} />
+
+                        {/* Stat */}
+                        <div className="stat-card" style={{marginTop:8}}>
+                            <p style={{fontSize:12, opacity:0.8, marginBottom:4}}>Toplam Nitelikli İlan</p>
+                            <p style={{fontSize:32, fontWeight:800, lineHeight:1}}>{leads.length}</p>
+                            <p style={{fontSize:11, opacity:0.7, marginTop:4}}>veritabanında kayıtlı</p>
                         </div>
                     </aside>
 
-                    {/* Main Content */}
-                    <main class="flex-1 p-6 md:p-10 space-y-8 max-w-7xl mx-auto w-full">
-                        {/* Header */}
-                        <header class="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-                            <div class="relative w-full md:w-96">
-                                <Search class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Ders veya şehir ara..." 
-                                    class="w-full bg-slate-800/50 border border-slate-700/50 py-3 pl-12 pr-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
-                                <p class="text-[10px] text-slate-500 mt-1.5 ml-2 font-medium italic">
-                                    💡 Konu ve içerik bazlı stabil arama aktif.
-                                </p>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <button 
+                    {/* ===== MAIN ===== */}
+                    <main style={{flex:1, padding:'32px 36px', overflowY:'auto', maxWidth:1100}}>
+                        {currentView === 'settings' ? renderSettingsView() : (
+                            <React.Fragment>
+                                {/* Header banner */}
+                        <div className="header-bar">
+                            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16}}>
+                                <div>
+                                    <h1 style={{fontSize:22, fontWeight:800, margin:0, letterSpacing:'-0.02em'}}>Özel Ders Talep Paneli</h1>
+                                    <p style={{margin:'4px 0 0', opacity:0.85, fontSize:13}}>İnternet genelinden toplanan gerçek zamanlı ilan akışı</p>
+                                </div>
+                                <button
+                                    className="scan-btn"
                                     onClick={triggerScan}
                                     disabled={scanning}
-                                    class={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm tracking-wide transition-all shadow-xl ${scanning ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 active:scale-95'}`}
+                                    style={{background: scanning ? undefined : 'rgba(255,255,255,0.2)', backdropFilter:'blur(8px)', border:'1.5px solid rgba(255,255,255,0.35)', boxShadow:'none'}}
                                 >
-                                    {scanning ? "Botlar Taranıyor..." : "🔍 Şimdi Tara"}
+                                    {scanning ? '⏳ Taranıyor...' : '🔍 Şimdi Tara'}
                                 </button>
-                                <span class="bg-emerald-500/10 text-emerald-400 px-4 py-3 rounded-2xl border border-emerald-500/20 text-xs font-bold">Bugün</span>
                             </div>
-                        </header>
+                        </div>
 
-                        {/* Leads Feed */}
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {loading ? (
-                                <div class="col-span-full py-20 text-center text-slate-500 animate-pulse">Yükleniyor...</div>
-                            ) : filteredLeads.length > 0 ? (
-                                filteredLeads.map(lead => (
-                                    <div key={lead.id} class="glass p-6 rounded-3xl lead-card group cursor-default">
-                                        <div class="flex justify-between items-start mb-4">
-                                            <div class="flex items-center gap-2">
-                                                <span class="bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md border border-indigo-500/20">
-                                                    {lead.subject}
-                                                </span>
-                                                <span class="text-slate-500 text-[10px] flex items-center gap-1 font-medium italic">
-                                                    {lead.platform} üzerinden
+                        {/* Arama + Özet */}
+                        <div style={{display:'flex', gap:16, marginBottom:28, alignItems:'center', flexWrap:'wrap'}}>
+                            <div style={{position:'relative', flex:1, minWidth:220}}>
+                                <span style={{position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', fontSize:16}}>🔎</span>
+                                <input
+                                    className="search-box"
+                                    placeholder="Ders, şehir veya konu ara..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <div style={{background:'#fff', border:'1px solid #e2e8f0', borderRadius:12, padding:'9px 18px', fontSize:13, fontWeight:600, color:'#475569', whiteSpace:'nowrap'}}>
+                                📋 {filtered.length} ilan gösteriliyor
+                            </div>
+                        </div>
+
+                        {/* İlanlar */}
+                        {loading ? (
+                            <div style={{textAlign:'center', padding:'80px 0', color:'#94a3b8'}} className="animate-pulse">
+                                <div style={{fontSize:32, marginBottom:12}}>⏳</div>
+                                <p style={{fontSize:15, fontWeight:500}}>İlanlar yükleniyor...</p>
+                            </div>
+                        ) : filtered.length === 0 ? (
+                            <div style={{textAlign:'center', padding:'80px 0', color:'#94a3b8'}}>
+                                <div style={{fontSize:40, marginBottom:12}}>📭</div>
+                                <p style={{fontSize:16, fontWeight:600, color:'#64748b'}}>İlan bulunamadı</p>
+                                <p style={{fontSize:13, marginTop:6}}>Farklı bir arama deneyin veya tarama başlatın.</p>
+                            </div>
+                        ) : (
+                            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px, 1fr))', gap:20}}>
+                                {filtered.map(lead => (
+                                    <div key={lead.id} className="lead-card">
+
+                                        {/* Kart başlık satırı */}
+                                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14, gap:8}}>
+                                            <div style={{display:'flex', flexWrap:'wrap', gap:6, alignItems:'center'}}>
+                                                <span className="subject-chip">{lead.subject}</span>
+                                                <span className={`${platformColor(lead.platform)}`} style={{borderRadius:8, padding:'3px 9px', fontSize:11, fontWeight:600, display:'inline-flex', alignItems:'center', gap:4}}>
+                                                    {platformIcon(lead.platform)} {lead.platform}
                                                 </span>
                                             </div>
-                                            <div class="flex items-center gap-1.5 text-slate-400 text-xs font-medium">
-                                                <Clock size={12} />
-                                                {lead.original_date}
-                                            </div>
+                                            {lead.original_date && (
+                                                <span style={{fontSize:11, color:'#94a3b8', fontWeight:500, whiteSpace:'nowrap', flexShrink:0}}>
+                                                    📅 {lead.original_date}
+                                                </span>
+                                            )}
                                         </div>
-                                        <p class="text-slate-200 text-lg leading-relaxed mb-6 font-medium">
-                                            "{lead.content}"
+
+                                        {/* İçerik */}
+                                        <p style={{fontSize:14, color:'#334155', lineHeight:1.7, marginBottom:16, fontWeight:400}}>
+                                            {lead.content.length > 180 ? lead.content.slice(0,180) + '…' : lead.content}
                                         </p>
-                                        <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-                                            <div class="flex flex-col gap-2">
-                                                <span class="flex items-center gap-1.5 text-slate-400 text-xs">
-                                                    <MapPin size={14} /> {lead.location}
+
+                                        {/* Alt bilgi */}
+                                        <div style={{borderTop:'1px solid #f1f5f9', paddingTop:14, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8}}>
+                                            <div style={{display:'flex', flexDirection:'column', gap:6}}>
+                                                <span style={{fontSize:12, color:'#64748b', display:'flex', alignItems:'center', gap:5}}>
+                                                    📍 <strong>{lead.location || 'Belirtilmemiş'}</strong>
                                                 </span>
-                                                {lead.contact_info ? (
-                                                    <div class="flex flex-wrap gap-2">
-                                                        <span class="flex items-center gap-1.5 text-emerald-400 text-[13px] font-bold bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20">
-                                                            <MessageSquare size={14} /> {lead.contact_info}
+                                                {lead.contact_info && (
+                                                    <div style={{display:'flex', gap:6, flexWrap:'wrap', alignItems:'center'}}>
+                                                        <span style={{fontSize:12, color:'#475569', fontWeight:600, background:'#f0fdf4', padding:'3px 10px', borderRadius:8, border:'1px solid #bbf7d0'}}>
+                                                            📞 {lead.contact_info}
                                                         </span>
                                                         {lead.whatsapp_link && (
-                                                            <a href={lead.whatsapp_link} target="_blank" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-xl transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
-                                                                WhatsApp'tan Yaz
+                                                            <a href={lead.whatsapp_link} target="_blank" className="wa-btn">
+                                                                💬 WhatsApp
                                                             </a>
                                                         )}
                                                     </div>
-                                                ) : (
-                                                    <span class="text-slate-500 text-[11px] italic">İletişim bilgisi aranıyor...</span>
                                                 )}
                                             </div>
-                                            <a href={lead.original_link} target="_blank" class="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
-                                                İlana Git <ExternalLink size={14} />
+                                            <a href={lead.original_link} target="_blank" className="goto-link">
+                                                İlana Git →
                                             </a>
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div class="col-span-full py-20 text-center text-slate-500">Talep bulunamadı.</div>
-                            )}
-                        </div>
+                                ))}
+                            </div>
+                        )}
+                            </React.Fragment>
+                        )}
                     </main>
+
+                    {/* Toast */}
+                    {toast && (
+                        <div style={{
+                            position:'fixed', bottom:28, right:28, zIndex:999,
+                            background: toast.type === 'error' ? '#fee2e2' : '#f0fdf4',
+                            border: `1.5px solid ${toast.type === 'error' ? '#fca5a5' : '#86efac'}`,
+                            color: toast.type === 'error' ? '#b91c1c' : '#15803d',
+                            borderRadius:14, padding:'14px 20px',
+                            fontWeight:600, fontSize:14,
+                            boxShadow:'0 8px 24px rgba(0,0,0,0.12)',
+                            maxWidth:320, animation:'none'
+                        }}>
+                            {toast.type === 'error' ? '❌' : '✅'} {toast.msg}
+                        </div>
+                    )}
                 </div>
             );
         };

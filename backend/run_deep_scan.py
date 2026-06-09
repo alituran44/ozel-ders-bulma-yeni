@@ -3,6 +3,8 @@ import os
 import asyncio
 from datetime import datetime
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 if os.name == 'nt':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 

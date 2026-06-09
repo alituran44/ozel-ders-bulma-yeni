@@ -44,7 +44,7 @@ class TwitterScraper:
             try:
                 query = f'site:x.com OR site:twitter.com "{kw}"'
                 encoded_query = urllib.parse.quote(query)
-                url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+                url = f"https://html.duckduckgo.com/html/?q={encoded_query}&df=m"
                 
                 req = urllib.request.Request(url, headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',

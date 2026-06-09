@@ -3,6 +3,8 @@ import sys
 import os
 import asyncio
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 if os.name == 'nt':
     try:
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -10,14 +12,16 @@ if os.name == 'nt':
         print(f"Asyncio policy setting warning: {e}")
 # -------------------------------------------------------------------
 
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import uvicorn
 import sqlite3
 import uuid
 import hashlib
+import json
 from datetime import datetime
 
 # Add the 'backend' directory to the path to enable direct imports
@@ -128,44 +132,93 @@ async def fetch_leads_api():
 is_scanning = False
 
 @app.post("/api/scan")
-async def trigger_scan():
+async def trigger_scan(background_tasks: BackgroundTasks):
     global is_scanning
     if is_scanning:
         return {"status": "error", "message": "Tarama zaten devam ediyor."}
     
     is_scanning = True
-    try:
-        scrapers = [ForumScraper(), TwitterScraper(), SahibindenScraper(), FacebookScraper(), InstagramScraper()]
-        classifier = LeadClassifier()
-        total_found = 0
-        
-        for scraper in scrapers:
-            try:
-                found = await scraper.scrape(max_posts=20)
-                for lead in found:
-                    analysis = classifier.classify(lead["content"])
-                    if analysis.get("is_lead"):
-                        lead.update({
-                            "subject": analysis.get("subject", "Özel Ders"),
-                            "location": analysis.get("location", lead.get("location", "Belirtilmemiş")),
-                            "contact_info": analysis.get("contact_info", lead.get("contact_info")),
-                            "whatsapp_link": analysis.get("whatsapp_link"),
-                        })
-                        save_lead(lead)
-                        total_found += 1
-            except Exception as scraper_err:
-                print(f"Manual Scan Error for {scraper.__class__.__name__}: {scraper_err}")
-                continue 
+    
+    async def run_scan_in_bg():
+        global is_scanning
+        try:
+            from ultra_deep_scan import run_ultra_deep_scan
+            await run_ultra_deep_scan()
+        except Exception as e:
+            print(f"Background Scan Error: {e}")
+        finally:
+            is_scanning = False
             
-        return {"status": "success", "message": f"Tarama bitti. {total_found} yeni nitelikli talep eklendi."}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-    finally:
-        is_scanning = False
+    background_tasks.add_task(run_scan_in_bg)
+    return {"status": "success", "message": "Derin tarama arka planda başlatıldı."}
 
 @app.get("/api/status")
 async def get_status():
     return {"is_scanning": is_scanning}
+
+class SettingsRequest(BaseModel):
+    platform: str
+    cookies: str
+
+@app.get("/api/settings")
+async def get_settings():
+    fb_path = "backend/auth/facebook_cookies.json"
+    ig_path = "backend/auth/instagram_cookies.json"
+    
+    fb_connected = False
+    if os.path.exists(fb_path):
+        try:
+            with open(fb_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list) and len(data) > 0:
+                    val = str(data[0].get("value", ""))
+                    if "BURAYA_" not in val:
+                        fb_connected = True
+        except:
+            pass
+            
+    ig_connected = False
+    if os.path.exists(ig_path):
+        try:
+            with open(ig_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list) and len(data) > 0:
+                    val = str(data[0].get("value", ""))
+                    if "BURAYA_" not in val:
+                        ig_connected = True
+        except:
+            pass
+            
+    return {
+        "status": "success",
+        "data": {
+            "facebook": {"connected": fb_connected},
+            "instagram": {"connected": ig_connected}
+        }
+    }
+
+@app.post("/api/settings")
+async def save_settings(req: SettingsRequest):
+    platform = req.platform.lower()
+    if platform not in ["facebook", "instagram"]:
+        return {"status": "error", "message": "Geçersiz platform. Sadece 'facebook' veya 'instagram' destekleniyor."}
+        
+    os.makedirs("backend/auth", exist_ok=True)
+    file_path = f"backend/auth/{platform}_cookies.json"
+    
+    try:
+        cookies_list = json.loads(req.cookies)
+        if not isinstance(cookies_list, list):
+            return {"status": "error", "message": "Çerezler bir JSON dizisi (array) olmalıdır."}
+            
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(cookies_list, f, indent=2, ensure_ascii=False)
+            
+        return {"status": "success", "message": f"{req.platform.capitalize()} çerezleri başarıyla kaydedildi."}
+    except json.JSONDecodeError:
+        return {"status": "error", "message": "Geçersiz JSON formatı. Lütfen kopyaladığınız çerezleri kontrol edin."}
+    except Exception as e:
+        return {"status": "error", "message": f"Kaydedilirken hata oluştu: {str(e)}"}
 
 # Serve Dashboard
 @app.get("/", response_class=HTMLResponse)
@@ -174,4 +227,4 @@ async def get_dashboard():
         return f.read()
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=False, loop="asyncio")
+    uvicorn.run("main:app", host="0.0.0.0", port=8081, reload=False, loop="asyncio")

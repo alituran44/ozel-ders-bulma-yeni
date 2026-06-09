@@ -82,7 +82,7 @@ class GoogleScraper:
                 # Search the entire web (not restricted to a specific site)
                 query = f'"{kw}" 2026'
                 encoded_query = urllib.parse.quote(query)
-                url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+                url = f"https://html.duckduckgo.com/html/?q={encoded_query}&df=m"
                 
                 req = urllib.request.Request(url, headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
