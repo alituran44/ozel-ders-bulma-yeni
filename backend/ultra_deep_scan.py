@@ -362,6 +362,8 @@ def _detect_platform(href, default):
         return "Ekşi Sözlük"
     elif "armut.com" in href:
         return "Armut"
+    elif "linkedin.com" in href:
+        return "LinkedIn"
     return default
 
 
@@ -609,6 +611,22 @@ async def run_ultra_deep_scan():
         print(f"   📸 Instagram: {ig_count} nitelikli lead")
 
         await browser.close()
+        
+        # ============================================================
+        # PHASE 6: LINKEDIN
+        # ============================================================
+        print(f"\n💼 PHASE 6: LinkedIn")
+        print("-" * 50)
+        before_li = total_qualified
+        try:
+            from scrapers.linkedin_scraper import LinkedInScraper
+            li_scraper = LinkedInScraper()
+            li_leads = await li_scraper.scrape(max_posts=15)
+            process_leads(li_leads)
+            li_count = total_qualified - before_li
+            print(f"   💼 LinkedIn: {li_count} nitelikli lead")
+        except Exception as e:
+            print(f"      ⚠️ LinkedIn tarama hatası: {e}")
     
     # ============================================================
     # SUMMARY

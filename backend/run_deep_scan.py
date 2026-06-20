@@ -16,6 +16,7 @@ from scrapers.twitter_scraper import TwitterScraper
 from scrapers.sahibinden_scraper import SahibindenScraper
 from scrapers.facebook_scraper import FacebookScraper
 from scrapers.instagram_scraper import InstagramScraper
+from scrapers.linkedin_scraper import LinkedInScraper
 from core.classifier import LeadClassifier
 
 async def run_all():
@@ -25,6 +26,7 @@ async def run_all():
         ("Sahibinden", SahibindenScraper()),
         ("Facebook Group", FacebookScraper()),
         ("Instagram", InstagramScraper()),
+        ("LinkedIn", LinkedInScraper()),
         ("DonanımHaber/Forum", ForumScraper())
     ]
     classifier = LeadClassifier()

@@ -160,6 +160,7 @@ class SettingsRequest(BaseModel):
 async def get_settings():
     fb_path = "backend/auth/facebook_cookies.json"
     ig_path = "backend/auth/instagram_cookies.json"
+    li_path = "backend/auth/linkedin_cookies.json"
     
     fb_connected = False
     if os.path.exists(fb_path):
@@ -185,19 +186,32 @@ async def get_settings():
         except:
             pass
             
+    li_connected = False
+    if os.path.exists(li_path):
+        try:
+            with open(li_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list) and len(data) > 0:
+                    val = str(data[0].get("value", ""))
+                    if "BURAYA_" not in val:
+                        li_connected = True
+        except:
+            pass
+            
     return {
         "status": "success",
         "data": {
             "facebook": {"connected": fb_connected},
-            "instagram": {"connected": ig_connected}
+            "instagram": {"connected": ig_connected},
+            "linkedin": {"connected": li_connected}
         }
     }
 
 @app.post("/api/settings")
 async def save_settings(req: SettingsRequest):
     platform = req.platform.lower()
-    if platform not in ["facebook", "instagram"]:
-        return {"status": "error", "message": "Geçersiz platform. Sadece 'facebook' veya 'instagram' destekleniyor."}
+    if platform not in ["facebook", "instagram", "linkedin"]:
+        return {"status": "error", "message": "Geçersiz platform. Sadece 'facebook', 'instagram' veya 'linkedin' destekleniyor."}
         
     os.makedirs("backend/auth", exist_ok=True)
     file_path = f"backend/auth/{platform}_cookies.json"
