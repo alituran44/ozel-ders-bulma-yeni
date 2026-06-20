@@ -46,51 +46,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")), name="static")
+
+
 # Background Task for Automatic Scraping (Every 4 Hours)
 async def automated_scraper_task():
-    """Task that runs every 4 hours to fetch new leads."""
-    scrapers = [
-        ForumScraper(),
-        TwitterScraper(),
-        SahibindenScraper(),
-        FacebookScraper(),
-        InstagramScraper()
-    ]
-    classifier = LeadClassifier()
+    """Task that runs every 4 hours to fetch new leads via an isolated subprocess."""
+    # Delay first run by 30 seconds to allow clean server boot and UI load
+    await asyncio.sleep(30)
+    
+    import sys
+    cmd = [sys.executable, "backend/run_deep_scan.py"]
     
     while True:
-        print(f"[{datetime.now()}] Automated deep scraping started...")
-        raw_leads = []
-        for scraper in scrapers:
-            try:
-                found = await scraper.scrape(max_posts=8)
-                print(f"[{datetime.now()}] Scraper ({scraper.__class__.__name__}) found {len(found)} raw items.")
-                raw_leads.extend(found)
-            except Exception as e:
-                print(f"[{datetime.now()}] Scraper Error ({scraper.__class__.__name__}): {str(e)}")
-                # Log to a file if possible or just continue to next scraper
-                continue
-        
-        # Process and Classify
-        qualified_count = 0
-        for lead in raw_leads:
-            try:
-                analysis = classifier.classify(lead["content"])
-                if analysis.get("is_lead"):
-                    lead.update({
-                        "subject": analysis.get("subject", "Özel Ders"),
-                        "location": analysis.get("location", lead.get("location", "Belirtilmemiş")),
-                        "contact_info": analysis.get("contact_info", lead.get("contact_info")),
-                        "whatsapp_link": analysis.get("whatsapp_link"),
-                        "is_qualified": 1
-                    })
-                    save_lead(lead)
-                    qualified_count += 1
-            except Exception as classify_err:
-                print(f"Classification skipped for one lead: {classify_err}")
-                continue
+        print(f"[{datetime.now()}] Starting background scraper subprocess...")
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            if process.returncode == 0:
+                print(f"[{datetime.now()}] Background scraper completed successfully.")
+            else:
+                err_msg = stderr.decode(errors='ignore')
+                print(f"[{datetime.now()}] Background scraper failed with code {process.returncode}. Error: {err_msg}")
+        except Exception as e:
+            print(f"[{datetime.now()}] Failed to launch background scraper: {e}")
             
-        print(f"[{datetime.now()}] Cycle finished. Processed {len(raw_leads)}, Saved {qualified_count} qualified leads.")
         try:
             await asyncio.sleep(14400)
         except asyncio.CancelledError:
@@ -98,7 +83,7 @@ async def automated_scraper_task():
             break
         except Exception as sleep_err:
             print(f"[{datetime.now()}] Unexpected error in sleeper: {sleep_err}")
-            await asyncio.sleep(60) # Short wait before retry
+            await asyncio.sleep(60)
 
 # Initialize database and background task on startup
 @app.on_event("startup")
@@ -141,11 +126,22 @@ async def trigger_scan(background_tasks: BackgroundTasks):
     
     async def run_scan_in_bg():
         global is_scanning
+        import sys
         try:
-            from ultra_deep_scan import run_ultra_deep_scan
-            await run_ultra_deep_scan()
+            cmd = [sys.executable, "backend/ultra_deep_scan.py"]
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            if process.returncode == 0:
+                print("Deep scan subprocess completed successfully.")
+            else:
+                err_msg = stderr.decode(errors='ignore')
+                print(f"Deep scan subprocess failed with code {process.returncode}. Error: {err_msg}")
         except Exception as e:
-            print(f"Background Scan Error: {e}")
+            print(f"Failed to launch deep scan subprocess: {e}")
         finally:
             is_scanning = False
             

@@ -156,6 +156,13 @@ def save_lead(lead_data):
             lead_data.get("is_qualified", 1)
         ))
         conn.commit()
+        
+        # Trigger Telegram notification for new unique leads
+        try:
+            from core.notifications import send_telegram_notification
+            send_telegram_notification(lead_data)
+        except Exception as e:
+            print(f"Failed to trigger Telegram notification: {e}")
     except sqlite3.IntegrityError:
         # Avoid logging common duplicates
         pass
