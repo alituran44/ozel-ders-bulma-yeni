@@ -1,0 +1,49 @@
+{
+  "sites": [
+    {
+      "name": "DonanımHaber Forum",
+      "platform_key": "DonanımHaber",
+      "base_url": "https://forum.donanimhaber.com/tyt-ayt-ydt--f615",
+      "url_template": "https://forum.donanimhaber.com/tyt-ayt-ydt--f615?page={page}",
+      "list_selector": ".kl-icerik-satir",
+      "title_selector": ".kl-konu a",
+      "link_selector": ".kl-konu a",
+      "author_selector": ".kl-uye-ad",
+      "date_selector": ".kl-konu-tarih",
+      "default_location": "Türkiye Geneli / Online",
+      "default_subject": "Özel Ders / Koçluk",
+      "sort_param": "",
+      "use_playwright": true
+    },
+    {
+      "name": "Sahibinden",
+      "platform_key": "Sahibinden",
+      "base_url": "https://www.sahibinden.com/ozel-ders-arayanlar",
+      "url_template": "https://www.sahibinden.com/ozel-ders-arayanlar?sorting=date_desc&page={page}",
+      "list_selector": "tr.searchResultsItem",
+      "title_selector": "td.searchResultsTitleValue a",
+      "link_selector": "td.searchResultsTitleValue a",
+      "author_selector": "",
+      "date_selector": "td.searchResultsDateValue",
+      "default_location": "Türkiye",
+      "default_subject": "Özel Ders",
+      "sort_param": "sorting=date_desc",
+      "use_playwright": true
+    },
+    {
+      "name": "Armut",
+      "platform_key": "Armut",
+      "base_url": "https://armut.com/ozel-ders-talepleri",
+      "url_template": "https://armut.com/ozel-ders-talepleri?sort=newest&page={page}",
+      "list_selector": ".job-card-item",
+      "title_selector": ".job-title",
+      "link_selector": ".job-card-link",
+      "author_selector": ".client-name",
+      "date_selector": ".job-post-date",
+      "default_location": "Belirtilmemiş",
+      "default_subject": "Özel Ders",
+      "sort_param": "sort=newest",
+      "use_playwright": true
+    }
+  ]
+}
