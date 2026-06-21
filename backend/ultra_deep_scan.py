@@ -395,6 +395,18 @@ async def run_ultra_deep_scan():
     print(f"📊 Toplam: {total_queries} sorgu + DonanımHaber + Sahibinden")
     print(f"{'='*70}")
     
+    # Initialize ScrapingStateManager and start scan session
+    state_manager = None
+    scan_id = None
+    try:
+        from database.state_manager import ScrapingStateManager
+        state_manager = ScrapingStateManager()
+        platforms = ["facebook_auth_feed", "facebook_search", "web_search", "donanimhaber", "sahibinden", "instagram_search", "linkedin", "apify"]
+        scan_id = state_manager.start_scan("Deep Scan", platforms)
+        print(f"   📊 Tarama oturumu başlatıldı (ID: {scan_id})")
+    except Exception as e:
+        print(f"   ⚠️ State Manager başlatma hatası: {e}")
+        
     classifier = LeadClassifier()
     seen_hashes = set()
     total_qualified = 0
@@ -445,9 +457,16 @@ async def run_ultra_deep_scan():
         if fb_cookies:
             print(f"\n🔑 PHASE 1: Facebook Oturumlu Akış (Private Groups)")
             print("-" * 50)
-            feed_leads = await _scrape_fb_feed(page, seen_hashes)
-            process_leads(feed_leads)
-            print(f"      ✅ {len(feed_leads)} yeni sonuç akıştan çekildi")
+            try:
+                feed_leads = await _scrape_fb_feed(page, seen_hashes)
+                process_leads(feed_leads)
+                print(f"      ✅ {len(feed_leads)} yeni sonuç akıştan çekildi")
+                if state_manager:
+                    state_manager.update_state("facebook_auth_feed", items_found=len(feed_leads))
+            except Exception as e:
+                print(f"      ⚠️ Facebook Akış hatası: {e}")
+                if state_manager:
+                    state_manager.update_state("facebook_auth_feed", error=str(e))
 
         # ============================================================
         # PHASE 2: FACEBOOK GROUPS (Search)
@@ -455,18 +474,27 @@ async def run_ultra_deep_scan():
         print(f"\n📘 PHASE 2: Facebook Aramaları ({len(fb_group_queries)} sorgu)")
         print("-" * 50)
         
-        for i, query in enumerate(fb_group_queries):
-            print(f"   [{i+1}/{len(fb_group_queries)}] {query[:55]}...")
-            leads = await _try_search_engines(page, query, seen_hashes, "Facebook Group")
-            process_leads(leads)
-            if leads:
-                print(f"      ✅ {len(leads)} sonuç")
-            else:
-                print(f"      ○ Sonuç yok")
-            await asyncio.sleep(4)
-        
-        fb_count = total_qualified
-        print(f"\n   📘 Facebook: {fb_count} nitelikli lead")
+        fb_phase_leads_count = 0
+        try:
+            for i, query in enumerate(fb_group_queries):
+                print(f"   [{i+1}/{len(fb_group_queries)}] {query[:55]}...")
+                leads = await _try_search_engines(page, query, seen_hashes, "Facebook Group")
+                process_leads(leads)
+                fb_phase_leads_count += len(leads)
+                if leads:
+                    print(f"      ✅ {len(leads)} sonuç")
+                else:
+                    print(f"      ○ Sonuç yok")
+                await asyncio.sleep(4)
+            
+            fb_count = total_qualified
+            print(f"\n   📘 Facebook: {fb_count} nitelikli lead")
+            if state_manager:
+                state_manager.update_state("facebook_search", items_found=fb_phase_leads_count)
+        except Exception as e:
+            print(f"      ⚠️ Facebook aramaları hatası: {e}")
+            if state_manager:
+                state_manager.update_state("facebook_search", error=str(e))
         
         # ============================================================
         # PHASE 2: WEB GENELI
@@ -474,18 +502,28 @@ async def run_ultra_deep_scan():
         print(f"\n🌐 PHASE 2: Web Geneli ({len(web_queries)} sorgu)")
         print("-" * 50)
         
-        for i, query in enumerate(web_queries):
-            print(f"   [{i+1}/{len(web_queries)}] {query[:55]}...")
-            leads = await _try_search_engines(page, query, seen_hashes, "Google / Web")
-            process_leads(leads)
-            if leads:
-                print(f"      ✅ {len(leads)} sonuç")
-            else:
-                print(f"      ○ Sonuç yok")
-            await asyncio.sleep(4)
-        
-        web_count = total_qualified - fb_count
-        print(f"\n   🌐 Web: {web_count} nitelikli lead")
+        web_phase_leads_count = 0
+        try:
+            for i, query in enumerate(web_queries):
+                print(f"   [{i+1}/{len(web_queries)}] {query[:55]}...")
+                leads = await _try_search_engines(page, query, seen_hashes, "Google / Web")
+                process_leads(leads)
+                web_phase_leads_count += len(leads)
+                if leads:
+                    print(f"      ✅ {len(leads)} sonuç")
+                else:
+                    print(f"      ○ Sonuç yok")
+                await asyncio.sleep(4)
+            
+            fb_count_temp = total_qualified if 'fb_count' not in locals() else fb_count
+            web_count = total_qualified - fb_count_temp
+            print(f"\n   🌐 Web: {web_count} nitelikli lead")
+            if state_manager:
+                state_manager.update_state("web_search", items_found=web_phase_leads_count)
+        except Exception as e:
+            print(f"      ⚠️ Web aramaları hatası: {e}")
+            if state_manager:
+                state_manager.update_state("web_search", error=str(e))
         
         # ============================================================
         # PHASE 3: DonanımHaber Forum (Direct)
@@ -499,47 +537,56 @@ async def run_ultra_deep_scan():
             "https://forum.donanimhaber.com/lgs--f621",
         ]
         
-        for forum_url in forum_urls:
-            try:
-                print(f"   Taranıyor: {forum_url}")
-                await page.goto(forum_url, wait_until="load", timeout=20000)
-                await asyncio.sleep(2)
-                
-                rows = await page.query_selector_all(".kl-icerik-satir")
-                for row in rows[:25]:
-                    try:
-                        title_elem = await row.query_selector(".kl-konu a")
-                        if not title_elem:
+        forum_leads_count = 0
+        try:
+            for forum_url in forum_urls:
+                try:
+                    print(f"   Taranıyor: {forum_url}")
+                    await page.goto(forum_url, wait_until="load", timeout=20000)
+                    await asyncio.sleep(2)
+                    
+                    rows = await page.query_selector_all(".kl-icerik-satir")
+                    for row in rows[:25]:
+                        try:
+                            title_elem = await row.query_selector(".kl-konu a")
+                            if not title_elem:
+                                continue
+                            title = await title_elem.inner_text()
+                            link = await title_elem.get_attribute("href")
+                            if not link.startswith("http"):
+                                link = "https://forum.donanimhaber.com" + link
+                            
+                            author_elem = await row.query_selector(".kl-uye-ad")
+                            author = await author_elem.inner_text() if author_elem else "Anonim"
+                            
+                            content = f"{title} (Yazar: {author})"
+                            text_hash = hashlib.md5(content.encode()).hexdigest()
+                            
+                            if text_hash in seen_hashes:
+                                continue
+                            seen_hashes.add(text_hash)
+                            
+                            lead = _make_lead(content, link, "DonanımHaber", text_hash)
+                            lead["original_date"] = "Bugün"
+                            lead["location"] = "Türkiye Geneli / Online"
+                            lead["subject"] = "Özel Ders / Koçluk"
+                            process_leads([lead])
+                            forum_leads_count += 1
+                        except Exception:
                             continue
-                        title = await title_elem.inner_text()
-                        link = await title_elem.get_attribute("href")
-                        if not link.startswith("http"):
-                            link = "https://forum.donanimhaber.com" + link
-                        
-                        author_elem = await row.query_selector(".kl-uye-ad")
-                        author = await author_elem.inner_text() if author_elem else "Anonim"
-                        
-                        content = f"{title} (Yazar: {author})"
-                        text_hash = hashlib.md5(content.encode()).hexdigest()
-                        
-                        if text_hash in seen_hashes:
-                            continue
-                        seen_hashes.add(text_hash)
-                        
-                        lead = _make_lead(content, link, "DonanımHaber", text_hash)
-                        lead["original_date"] = "Bugün"
-                        lead["location"] = "Türkiye Geneli / Online"
-                        lead["subject"] = "Özel Ders / Koçluk"
-                        process_leads([lead])
-                    except Exception:
-                        continue
-                
-                print(f"   ✅ Forum sayfası tamamlandı")
-            except Exception as e:
-                print(f"   ⚠️ Forum hatası: {e}")
-        
-        forum_count = total_qualified - before_forum
-        print(f"   💬 Forum: {forum_count} nitelikli lead")
+                    
+                    print(f"   ✅ Forum sayfası tamamlandı")
+                except Exception as e:
+                    print(f"   ⚠️ Forum hatası: {e}")
+            
+            forum_count = total_qualified - before_forum
+            print(f"   💬 Forum: {forum_count} nitelikli lead")
+            if state_manager:
+                state_manager.update_state("donanimhaber", items_found=forum_leads_count)
+        except Exception as e:
+            print(f"      ⚠️ DonanımHaber tarama hatası: {e}")
+            if state_manager:
+                state_manager.update_state("donanimhaber", error=str(e))
         
         # ============================================================
         # PHASE 4: Sahibinden (Direct)
@@ -548,13 +595,13 @@ async def run_ultra_deep_scan():
         print("-" * 50)
         
         before_sahib = total_qualified
+        sahib_leads_count = 0
         try:
             await page.goto("https://www.sahibinden.com/kategori/ders-danismanlik-ozel-ders", wait_until="domcontentloaded", timeout=20000)
             await asyncio.sleep(3)
             
             rows = await page.query_selector_all(".searchResultsItem")
             if not rows:
-                # Try alternative selectors
                 rows = await page.query_selector_all("[class*='searchResult']")
             
             for row in rows[:30]:
@@ -582,13 +629,18 @@ async def run_ultra_deep_scan():
                     lead = _make_lead(content, link or "", "Sahibinden", text_hash)
                     lead["original_date"] = "Güncel"
                     process_leads([lead])
+                    sahib_leads_count += 1
                 except Exception:
                     continue
             
             sahib_count = total_qualified - before_sahib
             print(f"   ✅ Sahibinden: {sahib_count} nitelikli lead")
+            if state_manager:
+                state_manager.update_state("sahibinden", items_found=sahib_leads_count)
         except Exception as e:
             print(f"   ⚠️ Sahibinden hatası: {e}")
+            if state_manager:
+                state_manager.update_state("sahibinden", error=str(e))
         
         # ============================================================
         # PHASE 5: INSTAGRAM (via Search Fallback)
@@ -597,18 +649,27 @@ async def run_ultra_deep_scan():
         print("-" * 50)
         
         before_ig = total_qualified
-        for i, query in enumerate(ig_queries):
-            print(f"   [{i+1}/{len(ig_queries)}] {query[:55]}...")
-            leads = await _try_search_engines(page, query, seen_hashes, "Instagram")
-            process_leads(leads)
-            if leads:
-                print(f"      ✅ {len(leads)} sonuç")
-            else:
-                print(f"      ○ Sonuç yok")
-            await asyncio.sleep(4)
-        
-        ig_count = total_qualified - before_ig
-        print(f"   📸 Instagram: {ig_count} nitelikli lead")
+        ig_leads_count = 0
+        try:
+            for i, query in enumerate(ig_queries):
+                print(f"   [{i+1}/{len(ig_queries)}] {query[:55]}...")
+                leads = await _try_search_engines(page, query, seen_hashes, "Instagram")
+                process_leads(leads)
+                ig_leads_count += len(leads)
+                if leads:
+                    print(f"      ✅ {len(leads)} sonuç")
+                else:
+                    print(f"      ○ Sonuç yok")
+                await asyncio.sleep(4)
+            
+            ig_count = total_qualified - before_ig
+            print(f"   📸 Instagram: {ig_count} nitelikli lead")
+            if state_manager:
+                state_manager.update_state("instagram_search", items_found=ig_leads_count)
+        except Exception as e:
+            print(f"      ⚠️ Instagram arama hatası: {e}")
+            if state_manager:
+                state_manager.update_state("instagram_search", error=str(e))
 
         await browser.close()
         
@@ -618,15 +679,49 @@ async def run_ultra_deep_scan():
         print(f"\n💼 PHASE 6: LinkedIn")
         print("-" * 50)
         before_li = total_qualified
+        li_leads_count = 0
         try:
             from scrapers.linkedin_scraper import LinkedInScraper
             li_scraper = LinkedInScraper()
             li_leads = await li_scraper.scrape(max_posts=15)
             process_leads(li_leads)
+            li_leads_count = len(li_leads)
             li_count = total_qualified - before_li
             print(f"   💼 LinkedIn: {li_count} nitelikli lead")
+            if state_manager:
+                state_manager.update_state("linkedin", items_found=li_leads_count)
         except Exception as e:
             print(f"      ⚠️ LinkedIn tarama hatası: {e}")
+            if state_manager:
+                state_manager.update_state("linkedin", error=str(e))
+
+        # ============================================================
+        # PHASE 7: APIFY SOCIAL LISTENING
+        # ============================================================
+        print(f"\n📲 PHASE 7: Apify Social Listening (Facebook & Instagram)")
+        print("-" * 50)
+        before_apify = total_qualified
+        apify_leads_count = 0
+        try:
+            from scrapers.apify_scraper import ApifyScraper
+            apify_scraper = ApifyScraper()
+            if apify_scraper.is_configured():
+                print("   🔍 Apify taraması başlatılıyor...")
+                apify_leads = await apify_scraper.scrape(max_posts=30)
+                process_leads(apify_leads)
+                apify_leads_count = len(apify_leads)
+                apify_count = total_qualified - before_apify
+                print(f"   📲 Apify: {apify_count} nitelikli lead")
+                if state_manager:
+                    state_manager.update_state("apify", items_found=apify_leads_count)
+            else:
+                print("   ℹ️ Apify API token yapılandırılmamış, bu aşama atlanıyor.")
+                if state_manager:
+                    state_manager.update_state("apify", items_found=0)
+        except Exception as e:
+            print(f"      ⚠️ Apify tarama hatası: {e}")
+            if state_manager:
+                state_manager.update_state("apify", error=str(e))
     
     # ============================================================
     # SUMMARY
@@ -640,6 +735,13 @@ async def run_ultra_deep_scan():
     print(f"⏱️ Süre: {elapsed:.0f} saniye ({elapsed/60:.1f} dakika)")
     print(f"{'='*70}")
     
+    if state_manager and scan_id is not None:
+        try:
+            state_manager.end_scan(scan_id, total_raw=total_raw, total_qualified=total_qualified)
+            print("   📊 Tarama oturumu başarıyla kapatıldı.")
+        except Exception as e:
+            print(f"   ⚠️ Tarama oturumu kapatma hatası: {e}")
+            
     export_results()
 
 

@@ -29,12 +29,36 @@ async def run_all():
         ("LinkedIn", LinkedInScraper()),
         ("DonanımHaber/Forum", ForumScraper())
     ]
+    
+    # Optional: Include Apify if configured
+    try:
+        from scrapers.apify_scraper import ApifyScraper
+        apify_scraper = ApifyScraper()
+        if apify_scraper.is_configured():
+            scrapers.append(("Apify (Social)", apify_scraper))
+            print("   📲 Apify modülü aktif olarak tarama listesine eklendi.")
+    except Exception as e:
+        print(f"   ⚠️ Apify modülü yükleme uyarısı: {e}")
+
+    # Initialize ScrapingStateManager and start scan session
+    state_manager = None
+    scan_id = None
+    try:
+        from database.state_manager import ScrapingStateManager
+        state_manager = ScrapingStateManager()
+        platforms = [s[0] for s in scrapers]
+        scan_id = state_manager.start_scan("Periodic Scan", platforms)
+        print(f"   📊 Tarama oturumu başlatıldı (ID: {scan_id})")
+    except Exception as e:
+        print(f"   ⚠️ State Manager başlatma hatası: {e}")
+
     classifier = LeadClassifier()
     total_found = 0
     total_qualified = 0
     
     for name, scraper in scrapers:
         print(f"\n📡 [{name}] ağına sızılıyor ve güncel talepler çekiliyor...")
+        state_key = name.lower().replace(" ", "_").replace("(", "").replace(")", "")
         try:
             found = await scraper.scrape(max_posts=25)
             print(f"   => {len(found)} adet ham veri toplandı. Yapay Zeka (Gemini) filtreden geçiriyor...")
@@ -56,8 +80,12 @@ async def run_all():
                     print(f"      ✅ [NİTELİKLİ TALEP BULUNDU]")
                     print(f"         Ders: {lead['subject']} | Konum: {lead['location']} | {contact}")
                     
+            if state_manager:
+                state_manager.update_state(state_key, items_found=len(found))
         except Exception as e:
             print(f"   ❌ {name} tarama motorunda hata oluştu: {str(e)}")
+            if state_manager:
+                state_manager.update_state(state_key, error=str(e))
             import traceback
             traceback.print_exc()
             
@@ -67,6 +95,13 @@ async def run_all():
     print(f"   Elenen (Reklam vs.): {total_found - total_qualified}")
     print(f"   Yakalanan Lead   :   {total_qualified}")
     print(f"   Tüm yeni talepler paneldeki veritabanına eklendi. Paneli yenileyerek görebilirsiniz!")
+
+    if state_manager and scan_id is not None:
+        try:
+            state_manager.end_scan(scan_id, total_raw=total_found, total_qualified=total_qualified)
+            print("   📊 Tarama oturumu başarıyla kapatıldı.")
+        except Exception as e:
+            print(f"   ⚠️ Tarama oturumu kapatma hatası: {e}")
 
 if __name__ == "__main__":
     asyncio.run(run_all())

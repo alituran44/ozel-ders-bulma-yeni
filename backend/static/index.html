@@ -236,18 +236,31 @@
 
             // Settings views & status
             const [currentView, setCurrentView] = useState('dashboard');
-            const [settings, setSettings]       = useState({ facebook: { connected: false }, instagram: { connected: false }, linkedin: { connected: false } });
+            const [settings, setSettings]       = useState({ facebook: { connected: false }, instagram: { connected: false }, linkedin: { connected: false }, apify: { connected: false } });
             const [fbCookiesInput, setFbCookiesInput] = useState('');
             const [igCookiesInput, setIgCookiesInput] = useState('');
             const [liCookiesInput, setLiCookiesInput] = useState('');
+            const [apifyKeyInput, setApifyKeyInput]   = useState('');
             const [savingSettings, setSavingSettings] = useState(false);
+            const [scanHistory, setScanHistory]       = useState([]);
 
             const fetchSettings = () => {
                 fetch('/api/settings')
                     .then(r => r.json())
                     .then(d => {
                         if (d.status === 'success') {
-                            setSettings(d.data);
+                            setSettings(prev => ({ ...prev, ...d.data }));
+                        }
+                    })
+                    .catch(() => {});
+            };
+
+            const fetchScanHistory = () => {
+                fetch('/api/scan/history')
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.status === 'success') {
+                            setScanHistory(d.data || []);
                         }
                     })
                     .catch(() => {});
@@ -272,6 +285,7 @@
                         if (platform === 'facebook') setFbCookiesInput('');
                         if (platform === 'instagram') setIgCookiesInput('');
                         if (platform === 'linkedin') setLiCookiesInput('');
+                        if (platform === 'apify') setApifyKeyInput('');
                     } else {
                         showToast(data.message || 'Kaydedilirken bir hata oluştu.', 'error');
                     }
@@ -337,6 +351,7 @@
                 fetchLeads();
                 checkStatus();
                 fetchSettings();
+                fetchScanHistory();
             }, []);
 
             const renderSettingsView = () => {
@@ -497,6 +512,58 @@
                             </div>
 
                         </div>
+
+                            {/* Apify API Settings */}
+                            <div style={{background: '#ffffff', borderRadius: 20, padding: 24, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)'}}>
+                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 16}}>
+                                    <div style={{display:'flex', alignItems:'center', gap: 10}}>
+                                        <span style={{fontSize: 24}}>🤖</span>
+                                        <div>
+                                            <h3 style={{fontSize: 16, fontWeight: 700, color: '#1e293b', margin: 0}}>Apify API (Social Listening)</h3>
+                                            <p style={{fontSize: 12, color: '#94a3b8', margin: 0}}>Facebook grupları ve Instagram'ı profesyonel API ile tarar</p>
+                                        </div>
+                                    </div>
+                                    <span style={{
+                                        background: settings.apify && settings.apify.connected ? '#f0fdf4' : '#fef2f2',
+                                        color: settings.apify && settings.apify.connected ? '#16a34a' : '#dc2626',
+                                        border: `1px solid ${settings.apify && settings.apify.connected ? '#bbf7d0' : '#fecaca'}`,
+                                        borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700
+                                    }}>
+                                        {settings.apify && settings.apify.connected ? '● Bağlı (Aktif)' : '● Bağlı Değil'}
+                                    </span>
+                                </div>
+                                
+                                <div style={{background: '#f8fafc', borderRadius: 12, padding: 14, fontSize: 13, color: '#475569', marginBottom: 16, borderLeft: '4px solid #22c55e'}}>
+                                    <strong>💡 Apify Nedir? Nasıl Bağlanır?</strong>
+                                    <p style={{margin: '6px 0 0', lineHeight: 1.6}}>Apify, Facebook grupları ve Instagram gibi platformları bot yazmadan taramanızı sağlayan bir API servisidir. Yerel Playwright taramalarından 10x daha hızlı ve güvenilirdir.</p>
+                                    <ol style={{margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.6}}>
+                                        <li><a href="https://console.apify.com/sign-up" target="_blank" style={{color: '#6366f1', fontWeight: 600}}>apify.com</a> üzerinden ücretsiz bir hesap oluşturun.</li>
+                                        <li><strong>Settings → Integrations</strong> sayfasından API Token'ınızı kopyalayın.</li>
+                                        <li>Token'ı aşağıdaki kutuya yapıştırın ve Kaydet deyin.</li>
+                                    </ol>
+                                </div>
+                                
+                                <input
+                                    type="password"
+                                    style={{width: '100%', background: '#fcfdfe', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: 12, fontSize: 13, fontFamily: 'monospace', outline: 'none'}}
+                                    placeholder="apify_api_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                                    value={apifyKeyInput}
+                                    onChange={e => setApifyKeyInput(e.target.value)}
+                                />
+                                
+                                <div style={{display:'flex', justifyContent:'flex-end', marginTop: 12}}>
+                                    <button
+                                        className="scan-btn"
+                                        disabled={savingSettings}
+                                        onClick={() => handleSaveCookies('apify', apifyKeyInput)}
+                                        style={{padding: '8px 20px', fontSize: 13, background: 'linear-gradient(135deg, #22c55e, #16a34a)'}}
+                                    >
+                                        {savingSettings ? 'Kaydediliyor...' : 'Apify API Key Kaydet 🔑'}
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 );
             };
@@ -584,6 +651,14 @@
                             ⚙️ Ayarlar
                         </button>
 
+                        <button
+                            className={`filter-btn ${currentView === 'history' ? 'active' : ''}`}
+                            onClick={() => { setCurrentView('history'); fetchScanHistory(); }}
+                        >
+                            <span className="dot"></span>
+                            📊 Tarama Geçmişi
+                        </button>
+
                         <div className="divider" style={{marginTop:'auto'}} />
 
                         {/* Stat */}
@@ -596,7 +671,48 @@
 
                     {/* ===== MAIN ===== */}
                     <main style={{flex:1, padding:'32px 36px', overflowY:'auto', maxWidth:1100}}>
-                        {currentView === 'settings' ? renderSettingsView() : (
+                        {currentView === 'settings' ? renderSettingsView() : currentView === 'history' ? (
+                            <div style={{maxWidth: 800}}>
+                                <h1 style={{fontSize: 28, fontWeight: 800, color: '#1e293b', marginBottom: 6}}>Tarama Geçmişi</h1>
+                                <p style={{color: '#64748b', fontSize: 14, marginBottom: 28}}>
+                                    Son yapılan otomatik ve manuel taramaların kayıtları.
+                                </p>
+                                
+                                {scanHistory.length === 0 ? (
+                                    <div style={{textAlign: 'center', padding: '60px 0', color: '#94a3b8'}}>
+                                        <div style={{fontSize: 40, marginBottom: 12}}>📭</div>
+                                        <p style={{fontSize: 16, fontWeight: 600, color: '#64748b'}}>Henüz tarama geçmişi yok</p>
+                                        <p style={{fontSize: 13, marginTop: 6}}>İlk taramayı başlattığınızda buradan takip edebilirsiniz.</p>
+                                    </div>
+                                ) : (
+                                    <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
+                                        {scanHistory.map((scan, i) => (
+                                            <div key={scan.id || i} style={{background: '#fff', borderRadius: 16, padding: 20, border: '1px solid #e8edf5', boxShadow: '0 2px 8px rgba(0,0,0,0.03)'}}>
+                                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 10}}>
+                                                    <div style={{display:'flex', alignItems:'center', gap: 8}}>
+                                                        <span style={{
+                                                            background: scan.status === 'COMPLETED' ? '#f0fdf4' : scan.status === 'RUNNING' ? '#eff6ff' : '#fef2f2',
+                                                            color: scan.status === 'COMPLETED' ? '#16a34a' : scan.status === 'RUNNING' ? '#2563eb' : '#dc2626',
+                                                            border: `1px solid ${scan.status === 'COMPLETED' ? '#bbf7d0' : scan.status === 'RUNNING' ? '#bfdbfe' : '#fecaca'}`,
+                                                            borderRadius: 8, padding: '3px 10px', fontSize: 11, fontWeight: 700
+                                                        }}>
+                                                            {scan.status === 'COMPLETED' ? '✅ Tamamlandı' : scan.status === 'RUNNING' ? '⏳ Devam Ediyor' : '❌ Hata'}
+                                                        </span>
+                                                        <span style={{fontSize: 12, color: '#94a3b8', fontWeight: 500}}>{scan.scan_type || 'Manuel'}</span>
+                                                    </div>
+                                                    <span style={{fontSize: 11, color: '#94a3b8'}}>{scan.started_at || ''}</span>
+                                                </div>
+                                                <div style={{display:'flex', gap: 16, fontSize: 13}}>
+                                                    <span style={{color: '#475569'}}>📥 Ham: <strong>{scan.total_raw || 0}</strong></span>
+                                                    <span style={{color: '#16a34a'}}>✅ Nitelikli: <strong>{scan.total_qualified || 0}</strong></span>
+                                                    {scan.platforms_scanned && <span style={{color: '#6366f1'}}>🌐 {scan.platforms_scanned}</span>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
                             <React.Fragment>
                                 {/* Header banner */}
                         <div className="header-bar">

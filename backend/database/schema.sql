@@ -18,3 +18,26 @@ CREATE TABLE IF NOT EXISTS leads (
 CREATE INDEX IF NOT EXISTS idx_leads_platform ON leads(platform);
 CREATE INDEX IF NOT EXISTS idx_leads_subject ON leads(subject);
 CREATE INDEX IF NOT EXISTS idx_leads_location ON leads(location);
+
+-- Delta Scraping State Management
+CREATE TABLE IF NOT EXISTS scraping_states (
+    site_key TEXT PRIMARY KEY,
+    last_scraped_at TIMESTAMP,
+    last_scraped_id TEXT,
+    items_found INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'ACTIVE',
+    error_message TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS scan_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    scan_type TEXT NOT NULL,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
+    total_raw INTEGER DEFAULT 0,
+    total_qualified INTEGER DEFAULT 0,
+    platforms_scanned TEXT,
+    status TEXT DEFAULT 'RUNNING',
+    error_log TEXT
+);

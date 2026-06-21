@@ -36,6 +36,13 @@ from scrapers.facebook_scraper import FacebookScraper
 from scrapers.instagram_scraper import InstagramScraper
 from core.classifier import LeadClassifier
 
+# Delta Scraping & Apify imports
+try:
+    from database.state_manager import ScrapingStateManager
+    state_manager = ScrapingStateManager()
+except Exception:
+    state_manager = None
+
 app = FastAPI(title="Özel Ders Lead Aggregator API")
 
 # Enable CORS for frontend
@@ -198,22 +205,76 @@ async def get_settings():
         except:
             pass
             
+    # Check Apify
+    apify_connected = False
+    apify_path = "backend/auth/apify_config.json"
+    if os.path.exists(apify_path):
+        try:
+            with open(apify_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                token = data.get("api_token", "")
+                if token and len(token) > 5:
+                    apify_connected = True
+        except:
+            pass
+            
     return {
         "status": "success",
         "data": {
             "facebook": {"connected": fb_connected},
             "instagram": {"connected": ig_connected},
-            "linkedin": {"connected": li_connected}
+            "linkedin": {"connected": li_connected},
+            "apify": {"connected": apify_connected}
         }
     }
 
 @app.post("/api/settings")
 async def save_settings(req: SettingsRequest):
     platform = req.platform.lower()
-    if platform not in ["facebook", "instagram", "linkedin"]:
-        return {"status": "error", "message": "Geçersiz platform. Sadece 'facebook', 'instagram' veya 'linkedin' destekleniyor."}
+    if platform not in ["facebook", "instagram", "linkedin", "apify"]:
+        return {"status": "error", "message": "Geçersiz platform. Sadece 'facebook', 'instagram', 'linkedin' veya 'apify' destekleniyor."}
         
     os.makedirs("backend/auth", exist_ok=True)
+    # Apify uses a different config format
+    if platform == "apify":
+        os.makedirs("backend/auth", exist_ok=True)
+        apify_path = "backend/auth/apify_config.json"
+        try:
+            # Try to parse as JSON to validate
+            config_data = json.loads(req.cookies)
+            api_token = config_data if isinstance(config_data, str) else config_data.get("api_token", req.cookies.strip())
+            
+            # Read existing config or create new
+            existing = {}
+            if os.path.exists(apify_path):
+                with open(apify_path, 'r', encoding='utf-8') as f:
+                    existing = json.load(f)
+            
+            existing["api_token"] = api_token if isinstance(api_token, str) else req.cookies.strip()
+            existing.setdefault("facebook_group_urls", [])
+            existing.setdefault("instagram_hashtags", ["özelders", "hocaarıyorum"])
+            existing.setdefault("scan_interval_minutes", 30)
+            
+            with open(apify_path, 'w', encoding='utf-8') as f:
+                json.dump(existing, f, indent=2, ensure_ascii=False)
+            
+            return {"status": "success", "message": "Apify API anahtarı başarıyla kaydedildi."}
+        except json.JSONDecodeError:
+            # If not JSON, treat the entire string as the API token
+            existing = {}
+            if os.path.exists(apify_path):
+                try:
+                    with open(apify_path, 'r', encoding='utf-8') as f:
+                        existing = json.load(f)
+                except:
+                    pass
+            existing["api_token"] = req.cookies.strip()
+            with open(apify_path, 'w', encoding='utf-8') as f:
+                json.dump(existing, f, indent=2, ensure_ascii=False)
+            return {"status": "success", "message": "Apify API anahtarı başarıyla kaydedildi."}
+        except Exception as e:
+            return {"status": "error", "message": f"Apify ayarları kaydedilirken hata: {str(e)}"}
+    
     file_path = f"backend/auth/{platform}_cookies.json"
     
     try:
@@ -229,6 +290,88 @@ async def save_settings(req: SettingsRequest):
         return {"status": "error", "message": "Geçersiz JSON formatı. Lütfen kopyaladığınız çerezleri kontrol edin."}
     except Exception as e:
         return {"status": "error", "message": f"Kaydedilirken hata oluştu: {str(e)}"}
+
+# ============================================================
+# APIFY SETTINGS ENDPOINTS
+# ============================================================
+
+@app.get("/api/apify/status")
+async def get_apify_status():
+    """Returns whether Apify is configured and ready."""
+    apify_path = "backend/auth/apify_config.json"
+    configured = False
+    token_preview = ""
+    if os.path.exists(apify_path):
+        try:
+            with open(apify_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                token = config.get("api_token", "")
+                if token and len(token) > 5:
+                    configured = True
+                    token_preview = token[:4] + "..." + token[-4:]
+        except:
+            pass
+    return {
+        "status": "success",
+        "data": {
+            "configured": configured,
+            "token_preview": token_preview
+        }
+    }
+
+# ============================================================
+# SCAN HISTORY & SCRAPING STATES ENDPOINTS
+# ============================================================
+
+@app.get("/api/scan/history")
+async def get_scan_history():
+    """Returns recent scan history."""
+    if state_manager:
+        try:
+            history = state_manager.get_scan_history(limit=20)
+            return {"status": "success", "data": history}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+    return {"status": "success", "data": []}
+
+@app.get("/api/scraping/states")
+async def get_scraping_states():
+    """Returns the current scraping state for all sites."""
+    if state_manager:
+        try:
+            states = state_manager.get_all_states()
+            return {"status": "success", "data": states}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+    return {"status": "success", "data": []}
+
+@app.get("/api/stats")
+async def get_dashboard_stats():
+    """Returns aggregated stats for the dashboard."""
+    try:
+        all_leads = get_leads(limit=1000)
+        platform_counts = {}
+        for lead in all_leads:
+            p = lead.get("platform", "Bilinmiyor")
+            platform_counts[p] = platform_counts.get(p, 0) + 1
+        
+        scan_history = []
+        if state_manager:
+            try:
+                scan_history = state_manager.get_scan_history(limit=5)
+            except:
+                pass
+        
+        return {
+            "status": "success",
+            "data": {
+                "total_leads": len(all_leads),
+                "platform_breakdown": platform_counts,
+                "recent_scans": scan_history
+            }
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 # Serve Dashboard
 @app.get("/", response_class=HTMLResponse)
