@@ -27,56 +27,27 @@ from database.db_manager import save_lead, get_leads
 from core.classifier import LeadClassifier
 
 # ============================================================
-# SEARCH QUERIES
+# SEARCH QUERIES (Optimized to reduce scan count by 78% using OR grouping)
 # ============================================================
 
 # Facebook group specific queries
 fb_group_queries = [
-    'site:facebook.com/groups özel ders arıyorum',
-    'site:facebook.com/groups hoca arıyorum',
-    'site:facebook.com/groups özel ders lazım',
-    'site:facebook.com/groups matematik özel ders',
-    'site:facebook.com/groups ingilizce özel ders',
-    'site:facebook.com/groups lgs anneleri',
-    'site:facebook.com/groups lgs velileri',
-    'site:facebook.com/groups lgs 2026',
-    'site:facebook.com/groups yks hoca',
-    'site:facebook.com/groups kpss özel ders',
-    'site:facebook.com/groups kpss matematik',
-    'site:facebook.com/groups ales hoca',
-    'site:facebook.com/groups ales özel ders',
-    'site:facebook.com/groups dgs matematik',
-    'site:facebook.com/groups ilkokul özel ders',
+    'site:facebook.com/groups ("özel ders arıyorum" OR "hoca arıyorum" OR "öğretmen arıyorum" OR "özel ders lazım")',
+    'site:facebook.com/groups ("matematik özel ders" OR "ingilizce özel ders" OR "lgs özel ders" OR "yks özel ders" OR "kpss özel ders")',
+    'site:facebook.com/groups ("lgs anneleri" OR "lgs velileri" OR "yks hoca" OR "ales özel ders" OR "dgs matematik" OR "ilkokul özel ders")'
 ]
 
 # Web queries
 web_queries = [
-    'özel ders arıyorum 2026',
-    'matematik hoca lazım 2026',
-    'özel ders lazım 2026',
-    'ingilizce hoca arıyorum',
-    'lgs özel ders 2026',
-    'yks özel ders 2026',
-    'kpss özel ders arıyorum',
-    'kpss matematik hoca',
-    'ales özel ders lazım',
-    'ales hoca arıyorum',
-    'tyt matematik hoca',
-    'ayt fizik hoca',
-    'çocuğuma özel ders',
-    'piyano özel ders',
-    'ilkokul özel ders',
+    '("özel ders arıyorum" OR "hoca arıyorum" OR "öğretmen arıyorum" OR "özel ders lazım") 2026',
+    '("matematik" OR "ingilizce" OR "fizik" OR "lgs" OR "yks" OR "kpss" OR "ales" OR "tyt" OR "ayt") ("özel ders" OR "hoca") 2026',
+    '("çocuğuma" OR "piyano" OR "ilkokul") ("özel ders" OR "hoca arıyorum" OR "öğretmen arıyorum")'
 ]
 
 # Instagram specific fallback queries
 ig_queries = [
-    'site:instagram.com "özel ders arıyorum"',
-    'site:instagram.com "hoca arıyorum"',
-    'site:instagram.com "özel ders lazım"',
-    'site:instagram.com matematik özel ders',
-    'site:instagram.com ingilizce özel ders',
-    'site:instagram.com lgs özel ders',
-    'site:instagram.com yks özel ders',
+    'site:instagram.com ("özel ders arıyorum" OR "hoca arıyorum" OR "özel ders lazım" OR "öğretmen arıyorum")',
+    'site:instagram.com ("matematik özel ders" OR "ingilizce özel ders" OR "lgs özel ders" OR "yks özel ders")'
 ]
 
 
@@ -485,7 +456,7 @@ async def run_ultra_deep_scan():
                     print(f"      ✅ {len(leads)} sonuç")
                 else:
                     print(f"      ○ Sonuç yok")
-                await asyncio.sleep(4)
+                await asyncio.sleep(2)
             
             fb_count = total_qualified
             print(f"\n   📘 Facebook: {fb_count} nitelikli lead")
@@ -513,7 +484,7 @@ async def run_ultra_deep_scan():
                     print(f"      ✅ {len(leads)} sonuç")
                 else:
                     print(f"      ○ Sonuç yok")
-                await asyncio.sleep(4)
+                await asyncio.sleep(2)
             
             fb_count_temp = total_qualified if 'fb_count' not in locals() else fb_count
             web_count = total_qualified - fb_count_temp
@@ -660,7 +631,7 @@ async def run_ultra_deep_scan():
                     print(f"      ✅ {len(leads)} sonuç")
                 else:
                     print(f"      ○ Sonuç yok")
-                await asyncio.sleep(4)
+                await asyncio.sleep(2)
             
             ig_count = total_qualified - before_ig
             print(f"   📸 Instagram: {ig_count} nitelikli lead")
