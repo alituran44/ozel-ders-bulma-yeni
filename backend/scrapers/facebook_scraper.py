@@ -13,119 +13,13 @@ class FacebookScraper:
     def __init__(self, keywords=None):
         if keywords is None:
             keywords = [
-                # === GENEL ÖZEL DERS TALEPLERİ ===
-                "özel ders arıyorum",
-                "özel ders lazım",
-                "hoca arıyorum",
-                "hoca lazım",
-                "öğretmen arıyorum",
-                "çocuğuma özel ders",
-                "çocuğum için hoca",
-                "evde özel ders",
-                "online özel ders arıyorum",
-
-                # === MATEMATİK / GEOMETRİ ===
-                "matematik özel ders arıyorum",
-                "matematik hocası aranıyor",
-                "matematik hoca lazım",
-                "geometri özel ders",
-
-                # === FEN BİLİMLERİ ===
-                "fen bilimleri özel ders",
-                "fizik özel ders arıyorum",
-                "fizik hoca lazım",
-                "kimya özel ders arıyorum",
-                "biyoloji özel ders arıyorum",
-
-                # === İNGİLİZCE / YABANCI DİL ===
-                "ingilizce özel ders arıyorum",
-                "ingilizce hoca aranıyor",
-                "almanca özel ders",
-
-                # === TÜRKÇE / EDEBİYAT ===
-                "türkçe özel ders arıyorum",
-                "edebiyat özel ders",
-
-                # === TARİH / COĞRAFYA ===
-                "tarih özel ders arıyorum",
-                "coğrafya özel ders",
-
-                # === LGS ===
-                "lgs özel ders",
-                "lgs matematik hoca",
-                "lgs fen hoca arıyorum",
-                "8. sınıf özel ders",
-                "lgs hazırlık hoca",
-
-                # === YKS / TYT / AYT ===
-                "yks özel ders arıyorum",
-                "tyt özel ders",
-                "ayt özel ders",
-                "yks matematik hoca",
-                "yks fizik özel ders",
-
-                # === KPSS / ALES / DGS ===
-                "kpss özel ders arıyorum",
-                "kpss matematik hoca",
-                "kpss eğitim bilimleri özel ders",
-                "ales özel ders",
-                "ales hoca arıyorum",
-                "ales sayısal özel ders",
-                "dgs özel ders",
-
-                # === İLKOKUL ===
-                "ilkokul özel ders",
-                "ortaokul özel ders",
-
-                # === MÜZİK ===
-                "piyano özel ders",
-                "gitar özel ders",
-
-                # === BİLGİSAYAR ===
-                "programlama özel ders",
+                'site:facebook.com/groups ("özel ders arıyorum" OR "özel ders lazım" OR "hoca arıyorum" OR "öğretmen arıyorum" OR "matematik özel ders" OR "ingilizce özel ders" OR "lgs özel ders" OR "yks özel ders" OR "kpss özel ders" OR "ales özel ders")'
             ]
         self.keywords = keywords
         
         # Specific Facebook group search queries
         self.group_searches = [
-            # LGS Anneleri / Velileri
-            'site:facebook.com/groups "lgs anneleri" özel ders',
-            'site:facebook.com/groups "lgs velileri" hoca',
-            'site:facebook.com/groups "lgs 2026" özel ders',
-            'site:facebook.com/groups "lgs hazırlık" hoca',
-
-            # Özel Ders Grupları
-            'site:facebook.com/groups "özel ders" arıyorum',
-            'site:facebook.com/groups "özel ders" lazım',
-            'site:facebook.com/groups "özel ders ilanları"',
-            'site:facebook.com/groups "özel ders platformu"',
-
-            # YKS Grupları
-            'site:facebook.com/groups "yks" özel ders',
-            'site:facebook.com/groups "tyt ayt" hoca',
-            'site:facebook.com/groups "yks 2026" özel ders',
-
-            # KPSS / ALES Grupları
-            'site:facebook.com/groups "kpss" özel ders arıyorum',
-            'site:facebook.com/groups "kpss matematik" hoca',
-            'site:facebook.com/groups "ales" özel ders',
-            'site:facebook.com/groups "ales hazırlık" hoca',
-
-            # Branş Bazlı
-            'site:facebook.com/groups "matematik" özel ders arıyorum',
-            'site:facebook.com/groups "ingilizce" özel ders arıyorum',
-            'site:facebook.com/groups "fen bilimleri" özel ders',
-
-            # Veli / Anne Grupları
-            'site:facebook.com/groups "anneler" özel ders',
-            'site:facebook.com/groups "veliler" hoca arıyorum',
-
-            # Şehir Bazlı
-            'site:facebook.com/groups "istanbul" özel ders arıyorum',
-            'site:facebook.com/groups "ankara" özel ders arıyorum',
-            'site:facebook.com/groups "izmir" özel ders arıyorum',
-            'site:facebook.com/groups "bursa" özel ders',
-            'site:facebook.com/groups "antalya" özel ders',
+            'site:facebook.com/groups ("lgs anneleri" OR "lgs velileri" OR "yks" OR "tyt ayt" OR "kpss" OR "ales" OR "istanbul" OR "ankara") ("özel ders" OR "hoca")'
         ]
 
     async def scrape(self, max_posts=100):
@@ -140,7 +34,10 @@ class FacebookScraper:
             if len(leads) >= max_posts:
                 break
             try:
-                query = f'site:facebook.com/groups "{kw}"'
+                if "site:" in kw or "OR" in kw:
+                    query = kw
+                else:
+                    query = f'site:facebook.com/groups "{kw}"'
                 new_leads = self._fetch_ddg(query, seen_hashes)
                 leads.extend(new_leads)
                 if new_leads:

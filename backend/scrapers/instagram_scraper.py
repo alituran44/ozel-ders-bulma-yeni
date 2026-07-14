@@ -13,22 +13,7 @@ class InstagramScraper:
     def __init__(self, keywords=None):
         if keywords is None:
             keywords = [
-                "özel ders arıyorum",
-                "matematik özel ders arıyorum",
-                "ingilizce özel ders arıyorum",
-                "fizik özel ders arıyorum",
-                "kimya özel ders arıyorum",
-                "biyoloji özel ders arıyorum",
-                "türkçe özel ders arıyorum",
-                "lgs özel ders",
-                "yks özel ders",
-                "özel ders lazım",
-                "hoca arıyorum",
-                "öğretmen arıyorum",
-                "çocuğuma özel ders",
-                "piyano özel ders",
-                "gitar özel ders",
-                "programlama özel ders",
+                'site:instagram.com/p/ ("özel ders arıyorum" OR "özel ders lazım" OR "hoca arıyorum" OR "öğretmen arıyorum" OR "matematik özel ders" OR "ingilizce özel ders" OR "lgs özel ders" OR "yks özel ders")'
             ]
         self.keywords = keywords
 
@@ -43,7 +28,10 @@ class InstagramScraper:
             if len(leads) >= max_posts:
                 break
             try:
-                query = f'site:instagram.com/p/ "{kw}"'
+                if "site:" in kw or "OR" in kw:
+                    query = kw
+                else:
+                    query = f'site:instagram.com/p/ "{kw}"'
                 encoded_query = urllib.parse.quote(query)
                 url = f"https://html.duckduckgo.com/html/?q={encoded_query}&df=m"
                 

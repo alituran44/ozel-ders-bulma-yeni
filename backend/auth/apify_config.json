@@ -1,13 +1,13 @@
 {
-    "api_token": "",
-    "facebook_group_urls": [
-        "https://www.facebook.com/groups/ozeldersarayanlar",
-        "https://www.facebook.com/groups/lgsanneleri"
-    ],
-    "instagram_hashtags": [
-        "özelders",
-        "hocaarıyorum",
-        "özeldersarıyorum"
-    ],
-    "scan_interval_minutes": 30
+  "api_token": "",
+  "facebook_group_urls": [
+    "https://www.facebook.com/groups/ozeldersarayanlar",
+    "https://www.facebook.com/groups/lgsanneleri"
+  ],
+  "instagram_hashtags": [
+    "özelders",
+    "hocaarıyorum",
+    "özeldersarıyorum"
+  ],
+  "scan_interval_minutes": 30
 }

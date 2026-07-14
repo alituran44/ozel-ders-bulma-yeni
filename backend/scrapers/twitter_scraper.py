@@ -12,22 +12,7 @@ class TwitterScraper:
     def __init__(self, keywords=None):
         if keywords is None:
             keywords = [
-                "özel ders arıyorum",
-                "özel ders lazım",
-                "matematik hoca arıyorum",
-                "ingilizce özel ders arıyorum",
-                "fizik özel ders arıyorum",
-                "kimya özel ders arıyorum",
-                "türkçe özel ders arıyorum",
-                "lgs özel ders arıyorum",
-                "yks hoca arıyorum",
-                "tyt özel ders",
-                "ayt özel ders",
-                "çocuğuma hoca arıyorum",
-                "piyano hoca arıyorum",
-                "gitar hoca arıyorum",
-                "programlama özel ders",
-                "hoca lazım acil",
+                '(site:x.com OR site:twitter.com) ("özel ders arıyorum" OR "özel ders lazım" OR "hoca arıyorum" OR "öğretmen arıyorum" OR "matematik özel ders" OR "ingilizce özel ders" OR "lgs özel ders" OR "yks hoca" OR "tyt özel ders")'
             ]
         self.keywords = keywords
 
@@ -42,7 +27,10 @@ class TwitterScraper:
             if len(tweets) >= max_posts:
                 break
             try:
-                query = f'site:x.com OR site:twitter.com "{kw}"'
+                if "site:" in kw or "OR" in kw:
+                    query = kw
+                else:
+                    query = f'site:x.com OR site:twitter.com "{kw}"'
                 encoded_query = urllib.parse.quote(query)
                 url = f"https://html.duckduckgo.com/html/?q={encoded_query}&df=m"
                 

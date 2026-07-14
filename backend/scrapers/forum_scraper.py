@@ -18,9 +18,9 @@ class ForumScraper:
             page = await context.new_page()
             
             try:
-                await page.goto(self.base_url, wait_until="load")
+                await page.goto(self.base_url, wait_until="domcontentloaded", timeout=15000)
                 # Wait for thread list - verified row selector
-                await page.wait_for_selector(".kl-icerik-satir", timeout=15000)
+                await page.wait_for_selector(".kl-icerik-satir", timeout=8000)
                 
                 leads = []
                 # Verified selector for the thread row in the new DH layout

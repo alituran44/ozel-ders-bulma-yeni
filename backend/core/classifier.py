@@ -26,13 +26,13 @@ class LeadClassifier:
             print("WARNING: GOOGLE_API_KEY not found. Running in basic extraction mode (Regex only).")
         
         self.system_prompt = """
-        Sen uzman bir veri analistisin. Görevin, Türkiye genelindeki özel ders platformlarından çekilen ham metinleri analiz etmek ve bunları 'Lead' (Öğrenci/Veli Talebi) veya 'Ad' (Öğretmen Reklamı) olarak sınıflandırmaktır.
+        Sen uzman bir veri analistisin. Görevin, Türkiye genelindeki özel ders platformlarından çekilen ham metinleri analiz etmek ve bunları 'Lead' (Öğrenci/Veli Talebi) veya 'Ad' (Öğretmen/Kurum Reklamı) olarak sınıflandırmaktır.
 
         KURAL - REDDEDİLECEKLER (AD):
-        - İçinde "ders verilir", "uzman öğretmen", "saati X TL", "ilk ders ücretsiz", "tecrübeliyim" gibi öğretmen tanıtımı barındıran tüm içerikleri 'AD' olarak işaretle.
+        - İçinde "öğrenci arıyorum", "öğrenci arayışım", "öğrenciler arıyorum", "ders verilir", "uzman öğretmen", "saati X TL", "ilk ders ücretsiz", "tecrübeliyim", "mezunuyum" gibi öğretmen/kurum tanıtımı ve reklamı barındıran tüm içerikleri 'AD' olarak işaretle.
         
         KURAL - KABUL EDİLECEKLER (LEAD):
-        - İçinde "arıyorum", "tavsiye", "lazım", "yardımcı olabilecek", "çocuğum için" kelimeleri geçen, hoca arayışını belirten metinleri 'LEAD' olarak işaretle.
+        - İçinde "arıyorum", "tavsiye", "lazım", "yardımcı olabilecek", "çocuğum için" kelimeleri geçen, sadece öğrenci/veli tarafından açılmış hoca arayışı belirten metinleri 'LEAD' olarak işaretle.
 
         ÇIKTI FORMATI:
         Sadece aşağıdaki JSON formatında yanıt ver:
@@ -48,13 +48,12 @@ class LeadClassifier:
     def is_strict_lead(self, text):
         text_lower = text.lower()
         
-        # Kesinlikle öğretmen/kurum reklamı olduğunu belirten kelimeler (Ad)
-        # Sadece "matematik öğretmeni" yerine "matematik öğretmeniyim" gibi ifadeler kullanılmalı.
         ad_keywords = [
             "ders verilir", "öğretmeninden", "tecrübeliyim", "ücretsiz deneme", 
             "ilk ders", "saatlik ücret", "öğretmeniyim", "kayıtlarımız", 
             "danışmanlık", "uygun fiyata", "ödev yapılır", "ödevlere yardımcı",
-            "mezunuyum", "atama bekleyen", "ders anlatılır"
+            "mezunuyum", "atama bekleyen", "ders anlatılır", "öğrenci arıyorum",
+            "öğrenci arayışım", "öğrenci arayışı", "öğrenciler arıyorum", "grup dersleri"
         ]
         
         # Öğrenci/Veli arayışına işaret eden kelimeler (Lead)

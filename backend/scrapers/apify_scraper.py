@@ -51,8 +51,8 @@ if not logger.handlers:
 APIFY_BASE_URL = "https://api.apify.com/v2"
 
 # Apify aktör kimlikleri
-ACTOR_FACEBOOK_GROUPS = "apify/facebook-groups-scraper"
-ACTOR_INSTAGRAM = "apify/instagram-scraper"
+ACTOR_FACEBOOK_GROUPS = "apify~facebook-groups-scraper"
+ACTOR_INSTAGRAM = "apify~instagram-scraper"
 
 # Durum sorgulama aralığı (saniye)
 POLL_INTERVAL_SECONDS = 10

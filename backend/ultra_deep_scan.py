@@ -88,8 +88,8 @@ async def _scrape_google(page, query, seen_hashes, default_platform):
     encoded = urllib.parse.quote(query)
     url = f"https://www.google.com/search?q={encoded}&hl=tr&num=20&tbs=qdr:m"
     
-    await page.goto(url, wait_until="domcontentloaded", timeout=15000)
-    await asyncio.sleep(2)
+    await page.goto(url, wait_until="domcontentloaded", timeout=10000)
+    await asyncio.sleep(1.0)
     
     # Check for CAPTCHA
     body = await page.inner_text("body")
@@ -138,8 +138,8 @@ async def _scrape_bing(page, query, seen_hashes, default_platform):
     encoded = urllib.parse.quote(query)
     url = f"https://www.bing.com/search?q={encoded}&setlang=tr&qft=interval%3d%2230%22"
     
-    await page.goto(url, wait_until="domcontentloaded", timeout=15000)
-    await asyncio.sleep(2)
+    await page.goto(url, wait_until="domcontentloaded", timeout=10000)
+    await asyncio.sleep(1.0)
     
     elements = await page.query_selector_all("li.b_algo")
     for el in elements:
@@ -176,8 +176,8 @@ async def _scrape_yandex(page, query, seen_hashes, default_platform):
     encoded = urllib.parse.quote(query)
     url = f"https://yandex.com/search/?text={encoded}&lr=983&within=8"
     
-    await page.goto(url, wait_until="domcontentloaded", timeout=15000)
-    await asyncio.sleep(2)
+    await page.goto(url, wait_until="domcontentloaded", timeout=10000)
+    await asyncio.sleep(1.0)
     
     # Yandex result blocks
     elements = await page.query_selector_all("li.serp-item")
@@ -372,7 +372,7 @@ async def run_ultra_deep_scan():
     try:
         from database.state_manager import ScrapingStateManager
         state_manager = ScrapingStateManager()
-        platforms = ["facebook_auth_feed", "facebook_search", "web_search", "donanimhaber", "sahibinden", "instagram_search", "linkedin", "apify"]
+        platforms = ["facebook_auth_feed", "facebook_search", "web_search", "donanimhaber", "sahibinden", "ozeldersalani", "instagram_search", "linkedin", "apify"]
         scan_id = state_manager.start_scan("Deep Scan", platforms)
         print(f"   📊 Tarama oturumu başlatıldı (ID: {scan_id})")
     except Exception as e:
@@ -385,7 +385,7 @@ async def run_ultra_deep_scan():
     
     from playwright.async_api import async_playwright
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             locale="tr-TR"
@@ -456,7 +456,7 @@ async def run_ultra_deep_scan():
                     print(f"      ✅ {len(leads)} sonuç")
                 else:
                     print(f"      ○ Sonuç yok")
-                await asyncio.sleep(2)
+                await asyncio.sleep(0.5)
             
             fb_count = total_qualified
             print(f"\n   📘 Facebook: {fb_count} nitelikli lead")
@@ -484,7 +484,7 @@ async def run_ultra_deep_scan():
                     print(f"      ✅ {len(leads)} sonuç")
                 else:
                     print(f"      ○ Sonuç yok")
-                await asyncio.sleep(2)
+                await asyncio.sleep(0.5)
             
             fb_count_temp = total_qualified if 'fb_count' not in locals() else fb_count
             web_count = total_qualified - fb_count_temp
@@ -513,8 +513,8 @@ async def run_ultra_deep_scan():
             for forum_url in forum_urls:
                 try:
                     print(f"   Taranıyor: {forum_url}")
-                    await page.goto(forum_url, wait_until="load", timeout=20000)
-                    await asyncio.sleep(2)
+                    await page.goto(forum_url, wait_until="domcontentloaded", timeout=15000)
+                    await asyncio.sleep(0.5)
                     
                     rows = await page.query_selector_all(".kl-icerik-satir")
                     for row in rows[:25]:
@@ -568,8 +568,8 @@ async def run_ultra_deep_scan():
         before_sahib = total_qualified
         sahib_leads_count = 0
         try:
-            await page.goto("https://www.sahibinden.com/kategori/ders-danismanlik-ozel-ders", wait_until="domcontentloaded", timeout=20000)
-            await asyncio.sleep(3)
+            await page.goto("https://www.sahibinden.com/kategori/ders-danismanlik-ozel-ders", wait_until="domcontentloaded", timeout=15000)
+            await asyncio.sleep(1)
             
             rows = await page.query_selector_all(".searchResultsItem")
             if not rows:
@@ -614,6 +614,33 @@ async def run_ultra_deep_scan():
                 state_manager.update_state("sahibinden", error=str(e))
         
         # ============================================================
+        # PHASE 4.5: Özel Ders Alanı (Direct)
+        # ============================================================
+        print(f"\n🎓 PHASE 4.5: Özel Ders Alanı")
+        print("-" * 50)
+        before_oda = total_qualified
+        oda_leads_count = 0
+        try:
+            from scrapers.ozeldersalani_scraper import OzelDersAlaniScraper
+            oda_scraper = OzelDersAlaniScraper()
+            oda_leads = await oda_scraper.scrape(max_posts=25)
+            unique_oda_leads = []
+            for lead in oda_leads:
+                if lead["text_hash"] not in seen_hashes:
+                    seen_hashes.add(lead["text_hash"])
+                    unique_oda_leads.append(lead)
+            process_leads(unique_oda_leads)
+            oda_leads_count = len(unique_oda_leads)
+            oda_count = total_qualified - before_oda
+            print(f"   ✅ Özel Ders Alanı: {oda_count} nitelikli lead")
+            if state_manager:
+                state_manager.update_state("ozeldersalani", items_found=oda_leads_count)
+        except Exception as e:
+            print(f"   ⚠️ Özel Ders Alanı hatası: {e}")
+            if state_manager:
+                state_manager.update_state("ozeldersalani", error=str(e))
+        
+        # ============================================================
         # PHASE 5: INSTAGRAM (via Search Fallback)
         # ============================================================
         print(f"\n📸 PHASE 5: Instagram ({len(ig_queries)} sorgu)")
@@ -631,7 +658,7 @@ async def run_ultra_deep_scan():
                     print(f"      ✅ {len(leads)} sonuç")
                 else:
                     print(f"      ○ Sonuç yok")
-                await asyncio.sleep(2)
+                await asyncio.sleep(0.5)
             
             ig_count = total_qualified - before_ig
             print(f"   📸 Instagram: {ig_count} nitelikli lead")

@@ -17,11 +17,13 @@ from scrapers.sahibinden_scraper import SahibindenScraper
 from scrapers.facebook_scraper import FacebookScraper
 from scrapers.instagram_scraper import InstagramScraper
 from scrapers.linkedin_scraper import LinkedInScraper
+from scrapers.ozeldersalani_scraper import OzelDersAlaniScraper
 from core.classifier import LeadClassifier
 
 async def run_all():
     print(f"[{datetime.now().strftime('%H:%M:%S')}] 🚀 Antigravity Derin Tarama Motoru Başlatıldı\n" + "="*60)
     scrapers = [
+        ("Özel Ders Alanı", OzelDersAlaniScraper()),
         ("X (Twitter)", TwitterScraper()),
         ("Sahibinden", SahibindenScraper()),
         ("Facebook Group", FacebookScraper()),

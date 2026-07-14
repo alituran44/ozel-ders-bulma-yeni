@@ -13,11 +13,7 @@ class LinkedInScraper:
     def __init__(self, keywords=None):
         if keywords is None:
             keywords = [
-                "özel ders arıyorum",
-                "özel ders lazım",
-                "matematik öğretmen arıyoruz",
-                "ingilizce hoca arıyorum",
-                "lgs ders hoca"
+                'site:linkedin.com/posts/ ("özel ders arıyorum" OR "özel ders lazım" OR "matematik öğretmen arıyoruz" OR "ingilizce hoca arıyorum" OR "lgs ders hoca")'
             ]
         self.keywords = keywords
         self.cookie_path = "backend/auth/linkedin_cookies.json"
@@ -150,7 +146,10 @@ class LinkedInScraper:
                 break
             try:
                 # Target posts on LinkedIn indexable by search engines
-                query = f'site:linkedin.com/posts/ "{kw}"'
+                if "site:" in kw:
+                    query = kw
+                else:
+                    query = f'site:linkedin.com/posts/ "{kw}"'
                 encoded_query = urllib.parse.quote(query)
                 url = f"https://html.duckduckgo.com/html/?q={encoded_query}&df=m"
                 

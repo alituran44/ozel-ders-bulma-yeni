@@ -18,8 +18,8 @@ class SahibindenScraper:
             
             try:
                 # Sahibinden is very strict. We use some evasive measures.
-                await page.goto(self.base_url, wait_until="networkidle")
-                await page.wait_for_timeout(3000)
+                await page.goto(self.base_url, wait_until="domcontentloaded", timeout=10000)
+                await page.wait_for_timeout(1000)
                 
                 leads = []
                 # Sahibinden rows are usually in a table or list
