@@ -52,7 +52,7 @@ ig_queries = [
 
 
 async def _try_search_engines(page, query, seen_hashes, default_platform):
-    """Try multiple search engines in order: Google -> Bing -> Yandex"""
+    """Try multiple search engines in order: Google -> Bing"""
     results = []
     
     # Strategy 1: Google
@@ -71,14 +71,6 @@ async def _try_search_engines(page, query, seen_hashes, default_platform):
     except Exception as e:
         pass
     
-    # Strategy 3: Yandex (good for Turkish content)
-    try:
-        results = await _scrape_yandex(page, query, seen_hashes, default_platform)
-        if results:
-            return results
-    except Exception as e:
-        pass
-    
     return results
 
 
@@ -88,8 +80,8 @@ async def _scrape_google(page, query, seen_hashes, default_platform):
     encoded = urllib.parse.quote(query)
     url = f"https://www.google.com/search?q={encoded}&hl=tr&num=20&tbs=qdr:m"
     
-    await page.goto(url, wait_until="domcontentloaded", timeout=10000)
-    await asyncio.sleep(1.0)
+    await page.goto(url, wait_until="domcontentloaded", timeout=4000)
+    await asyncio.sleep(0.1)
     
     # Check for CAPTCHA
     body = await page.inner_text("body")
@@ -138,8 +130,8 @@ async def _scrape_bing(page, query, seen_hashes, default_platform):
     encoded = urllib.parse.quote(query)
     url = f"https://www.bing.com/search?q={encoded}&setlang=tr&qft=interval%3d%2230%22"
     
-    await page.goto(url, wait_until="domcontentloaded", timeout=10000)
-    await asyncio.sleep(1.0)
+    await page.goto(url, wait_until="domcontentloaded", timeout=4000)
+    await asyncio.sleep(0.1)
     
     elements = await page.query_selector_all("li.b_algo")
     for el in elements:
