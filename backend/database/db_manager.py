@@ -125,6 +125,35 @@ def is_old_or_invalid_lead(content, url="", date_str=""):
         
     return False
 
+def is_duplicate_lead(content):
+    """Checks if the lead content is similar to recently saved leads to avoid duplicates."""
+    from difflib import SequenceMatcher
+    
+    new_content_clean = str(content).strip().lower()
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    try:
+        # Fetch the 50 most recent leads
+        cursor.execute("SELECT content FROM leads ORDER BY created_at DESC LIMIT 50")
+        recent_leads = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching recent leads for deduplication: {e}")
+        recent_leads = []
+    finally:
+        conn.close()
+        
+    for row in recent_leads:
+        old_content_clean = str(row[0]).strip().lower()
+        
+        # Calculate similarity ratio
+        ratio = SequenceMatcher(None, new_content_clean, old_content_clean).ratio()
+        if ratio > 0.85:
+            return True
+            
+    return False
+
 def save_lead(lead_data):
     """Saves a lead dictionary to the database."""
     content = lead_data.get("content", "")
@@ -133,6 +162,11 @@ def save_lead(lead_data):
     
     if is_old_or_invalid_lead(content, url, date_str):
         # Skip saving outdated or invalid leads
+        return
+        
+    if is_duplicate_lead(content):
+        # Skip duplicate leads
+        print(f"   ℹ️ Yinelenen (Duplicate) ilan elendi (Benzerlik > 85%)")
         return
         
     conn = sqlite3.connect(DB_PATH)

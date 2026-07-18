@@ -1,0 +1,182 @@
+[
+  {
+    "text": "LGS'ye hazırlanan oğlum için Kadıköy'de haftada 2 gün yüz yüze İngilizce özel ders verecek öğretmen arıyoruz.",
+    "is_lead": true,
+    "subject": "İngilizce",
+    "location": "İstanbul"
+  },
+  {
+    "text": "Üniversite hazırlık (YKS) için fizik dersi almak istiyorum. Konu anlatımı ve soru çözümü yapabilecek hoca arayışım var.",
+    "is_lead": true,
+    "subject": "Fizik",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Merhaba, ilkokul 3. sınıf öğrencisi kızım için okuma yazma desteği verecek tecrübeli bir sınıf öğretmeni tavsiyesi olan var mı?",
+    "is_lead": true,
+    "subject": "İlkokul / Sınıf Öğretmenliği",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Samsun Atakum'da ikamet ediyoruz. YKS sayısal öğrencisi kızıma haftalık program yapacak ve ders takibi yapacak eğitim koçu aranıyor.",
+    "is_lead": true,
+    "subject": "Eğitim Koçluğu",
+    "location": "Samsun"
+  },
+  {
+    "text": "KPSS hazırlık aşamasındayım. Türkçe ve Matematik derslerinden online ders verebilecek, soru çözüm tekniklerine hakim hoca lazım.",
+    "is_lead": true,
+    "subject": "Türkçe / Matematik",
+    "location": "Online"
+  },
+  {
+    "text": "Merhaba arkadaşlar, 8. sınıf LGS hazırlık için Ankara Çankaya bölgesinde birebir matematik özel ders öğretmeni arıyoruz. Önerisi olan yazabilir mi?",
+    "is_lead": true,
+    "subject": "Matematik",
+    "location": "Ankara"
+  },
+  {
+    "text": "İlkokul takviye dersleri için Ankara Yenimahalle'de yüz yüze gelebilecek bayan öğretmen arıyoruz.",
+    "is_lead": true,
+    "subject": "İlkokul",
+    "location": "Ankara"
+  },
+  {
+    "text": "10. sınıf öğrencisi oğluma kimya ve biyoloji derslerinden yardımcı olabilecek üniversite öğrencisi veya öğretmen arayışımız vardır.",
+    "is_lead": true,
+    "subject": "Kimya / Biyoloji",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Ales hazırlık için online özel ders almak istiyorum. Matematik bölümünde netlerimi artıracak tecrübeli bir öğretmen arıyorum.",
+    "is_lead": true,
+    "subject": "Matematik",
+    "location": "Online"
+  },
+  {
+    "text": "Çocuğuma evde piyano eğitimi aldıracağım. Başlangıç seviyesinde, haftada 1 gün eve gelebilecek piyano hocası arıyoruz. Yer: Beşiktaş.",
+    "is_lead": true,
+    "subject": "Müzik / Piyano",
+    "location": "İstanbul"
+  },
+  {
+    "text": "Almanca A1-A2 seviyesi konuşma pratiği için yabancı dil öğretmeni arıyorum. Dersler online olacaktır.",
+    "is_lead": true,
+    "subject": "Almanca",
+    "location": "Online"
+  },
+  {
+    "text": "YKS eşit ağırlık öğrencisiyim. Edebiyat ve Coğrafya konularında net yükseltmeme yardımcı olacak deneyimli hoca arıyorum.",
+    "is_lead": true,
+    "subject": "Edebiyat / Coğrafya",
+    "location": "Türkiye"
+  },
+  {
+    "text": "8 yaşındaki oğluma yüzme dersi aldıracağız. Hafta sonu uygun olan özel yüzme antrenörü arıyoruz.",
+    "is_lead": true,
+    "subject": "Yüzme",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Üniversite calculus 1 dersi için İngilizce anlatım yapabilecek, vize hazırlığında yardımcı olacak hoca aranıyor.",
+    "is_lead": true,
+    "subject": "Calculus",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Lise 1. sınıf öğrencisi kızıma biyoloji dersini sevdirecek, haftada bir gün yüz yüze ders yapacak öğretmen arayışımız vardır.",
+    "is_lead": true,
+    "subject": "Biyoloji",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Merhaba! Boğaziçi Üniversitesi Matematik Öğretmenliği mezunuyum. LGS ve YKS öğrencilerine özel ders veriyorum. İlk ders ücretsiz deneme dersidir.",
+    "is_lead": false,
+    "subject": "Matematik",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Tecrübeli öğretmenden uygun fiyata özel ders verilir. İlkokul, ortaokul takviye ve sınav hazırlık. Detaylı bilgi için DM atınız.",
+    "is_lead": false,
+    "subject": "Özel Ders",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Kayıtlarımız başlamıştır! Yeni dönemde LGS ve YKS hazırlık grup derslerimiz için erken kayıt avantajlarını kaçırmayın. İletişim: 0555...",
+    "is_lead": false,
+    "subject": "Grup Dersleri",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Ders vermek için yeni öğrenciler arıyorum. Matematik ve Fizik alanında 5 yıllık özel ders tecrübesine sahibim. Saatlik ücret 500 TL.",
+    "is_lead": false,
+    "subject": "Matematik / Fizik",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Profesyonel eğitim koçluğu ve danışmanlık hizmeti sunmaktayım. Öğrenci takibi, haftalık program analizi ve motivasyon desteği verilir.",
+    "is_lead": false,
+    "subject": "Eğitim Koçluğu",
+    "location": "Türkiye"
+  },
+  {
+    "text": "ODTÜ mezunu kimya öğretmeninden lise öğrencilerine birebir özel ders verilir. Kimya derslerindeki başarınızı garanti ediyoruz.",
+    "is_lead": false,
+    "subject": "Kimya",
+    "location": "Türkiye"
+  },
+  {
+    "text": "İlkokul ödevlerine yardımcı olunur, okuma yazma takviyesi ve matematik dersleri verilir. Genç sınıf öğretmeniyim.",
+    "is_lead": false,
+    "subject": "İlkokul / Ödev Yardım",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Yabancı dil kursumuzda her seviyeye uygun Almanca, İngilizce ve Fransızca konuşma kulüplerimiz açılmıştır. Kayıt için iletişime geçin.",
+    "is_lead": false,
+    "subject": "Yabancı Dil",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Atama bekleyen coğrafya öğretmeniyim. Lise öğrencilerine TYT-AYT hazırlık coğrafya dersi anlatılır. Fiyat oldukça uygundur.",
+    "is_lead": false,
+    "subject": "Coğrafya",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Çocuğunuzun sınav başarısını şansa bırakmayın. Eğitim merkezimizde uzman kadromuzla birebir özel ders imkanları sunulmaktadır.",
+    "is_lead": false,
+    "subject": "Özel Ders",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Matematik ve geometri derslerinizde sıfırdan başarıya ulaşmak için benimle iletişime geçebilirsiniz. Bireyselleştirilmiş eğitim planı.",
+    "is_lead": false,
+    "subject": "Matematik / Geometri",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Online python ve web yazılım dersleri veriyorum. Proje bazlı öğrenme yöntemiyle kısa sürede kendi yazılımlarınızı geliştirin.",
+    "is_lead": false,
+    "subject": "Yazılım / Python",
+    "location": "Türkiye"
+  },
+  {
+    "text": "Özel eğitim ihtiyacı olan çocuklara yönelik okuma-yazma, temel matematik ve sosyal uyum becerileri dersleri verilir.",
+    "is_lead": false,
+    "subject": "Özel Eğitim",
+    "location": "Türkiye"
+  },
+  {
+    "text": "10 yıldır aktif olarak öğretmenlik yapıyorum. KPSS Eğitim Bilimleri derslerinden online olarak takviye ders vermekteyim.",
+    "is_lead": false,
+    "subject": "KPSS",
+    "location": "Online"
+  },
+  {
+    "text": "Lise öğrencileri için fizik, kimya, biyoloji derslerinden dönem boyu destek ve yazılı hazırlık dersleri anlatılır.",
+    "is_lead": false,
+    "subject": "Fizik / Kimya / Biyoloji",
+    "location": "Türkiye"
+  }
+]

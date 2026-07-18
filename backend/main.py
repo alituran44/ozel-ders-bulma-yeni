@@ -345,6 +345,16 @@ async def get_scraping_states():
             return {"status": "error", "message": str(e)}
     return {"status": "success", "data": []}
 
+@app.post("/api/health/check")
+async def trigger_health_check():
+    try:
+        from core.health_checker import ScraperHealthChecker
+        checker = ScraperHealthChecker()
+        results = await checker.run_checks()
+        return {"status": "success", "data": results}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/api/stats")
 async def get_dashboard_stats():
     """Returns aggregated stats for the dashboard."""

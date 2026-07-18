@@ -243,6 +243,8 @@
             const [apifyKeyInput, setApifyKeyInput]   = useState('');
             const [savingSettings, setSavingSettings] = useState(false);
             const [scanHistory, setScanHistory]       = useState([]);
+            const [scrapingStates, setScrapingStates] = useState([]);
+            const [checkingHealth, setCheckingHealth] = useState(false);
 
             const fetchSettings = () => {
                 fetch('/api/settings')
@@ -264,6 +266,36 @@
                         }
                     })
                     .catch(() => {});
+            };
+
+            const fetchScrapingStates = () => {
+                fetch('/api/scraping/states')
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.status === 'success') {
+                            setScrapingStates(d.data || []);
+                        }
+                    })
+                    .catch(() => {});
+            };
+
+            const runHealthCheck = async () => {
+                setCheckingHealth(true);
+                showToast('Sağlık kontrolü başlatıldı, tarayıcılar test ediliyor...');
+                try {
+                    const res = await fetch('/api/health/check', { method: 'POST' });
+                    const d = await res.json();
+                    if (d.status === 'success') {
+                        showToast('Sağlık kontrolü tamamlandı!');
+                        fetchScrapingStates();
+                    } else {
+                        showToast(d.message || 'Sağlık kontrolü başarısız.', 'error');
+                    }
+                } catch {
+                    showToast('Sunucuya bağlanılamadı.', 'error');
+                } finally {
+                    setCheckingHealth(false);
+                }
             };
 
             const handleSaveCookies = async (platform, cookiesText) => {
@@ -352,6 +384,7 @@
                 checkStatus();
                 fetchSettings();
                 fetchScanHistory();
+                fetchScrapingStates();
             }, []);
 
             const renderSettingsView = () => {
@@ -363,6 +396,61 @@
                         </p>
                         
                         <div style={{display:'flex', flexDirection:'column', gap: 24}}>
+                            
+                            {/* Scraper Sağlık Durumu (Health Checker) */}
+                            <div style={{background: '#ffffff', borderRadius: 20, padding: 24, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)'}}>
+                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 16}}>
+                                    <div style={{display:'flex', alignItems:'center', gap: 10}}>
+                                        <span style={{fontSize: 24}}>🏥</span>
+                                        <div>
+                                            <h3 style={{fontSize: 16, fontWeight: 700, color: '#1e293b', margin: 0}}>Veri Kaynakları & Sağlık Kontrolleri</h3>
+                                            <p style={{fontSize: 12, color: '#94a3b8', margin: 0}}>İlan toplanan web sitelerinin ve tarayıcı botlarının sağlık durumları</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        className="scan-btn"
+                                        disabled={checkingHealth}
+                                        onClick={runHealthCheck}
+                                        style={{padding: '8px 16px', fontSize: 13, background: 'linear-gradient(135deg, #0284c7, #0369a1)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontWeight: 600}}
+                                    >
+                                        {checkingHealth ? 'Kontrol Ediliyor...' : '🔍 Sağlık Kontrolü Çalıştır'}
+                                    </button>
+                                </div>
+
+                                <div style={{display:'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginTop: 20}}>
+                                    {scrapingStates.map((state) => {
+                                        const isError = state.status === 'ERROR';
+                                        return (
+                                            <div key={state.site_key} style={{background: '#f8fafc', borderRadius: 14, padding: 16, border: `1px solid ${isError ? '#fecaca' : '#e2e8f0'}`, position: 'relative'}}>
+                                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
+                                                    <strong style={{fontSize: 13, color: '#1e293b', textTransform: 'capitalize'}}>{state.site_key.replace('_', ' ')}</strong>
+                                                    <span style={{
+                                                        fontSize: 10,
+                                                        fontWeight: 700,
+                                                        padding: '2px 8px',
+                                                        borderRadius: 12,
+                                                        background: isError ? '#fef2f2' : '#f0fdf4',
+                                                        color: isError ? '#dc2626' : '#16a34a'
+                                                    }}>
+                                                        {isError ? 'Hata' : 'Aktif'}
+                                                    </span>
+                                                </div>
+                                                <p style={{fontSize: 11, color: '#64748b', margin: '4px 0'}}>
+                                                    Son Tarama: <span style={{fontWeight: 500, color: '#334155'}}>{state.last_scraped_at ? new Date(state.last_scraped_at).toLocaleTimeString() : 'Hiç'}</span>
+                                                </p>
+                                                <p style={{fontSize: 11, color: '#64748b', margin: '4px 0'}}>
+                                                    Bulunan İlan: <span style={{fontWeight: 600, color: '#334155'}}>{state.items_found || 0}</span>
+                                                </p>
+                                                {isError && state.error_message && (
+                                                    <div style={{marginTop: 8, padding: 8, background: '#fff', borderRadius: 8, border: '1px solid #fca5a5', fontSize: 10, color: '#b91c1c', maxHeight: 80, overflowY: 'auto', fontFamily: 'monospace'}}>
+                                                        {state.error_message}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                             
                             {/* Facebook Settings */}
                             <div style={{background: '#ffffff', borderRadius: 20, padding: 24, border: '1px solid #e8edf5', boxShadow: '0 2px 12px rgba(0,0,0,0.02)'}}>

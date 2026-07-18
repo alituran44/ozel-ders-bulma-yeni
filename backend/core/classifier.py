@@ -58,9 +58,14 @@ class LeadClassifier:
         
         # Öğrenci/Veli arayışına işaret eden kelimeler (Lead)
         lead_keywords = [
-            "arıyorum", "aranıyor", "lazım", "tavsiye", "yardımcı olabilecek", 
-            "hoca arıyoruz", "çocuğum için", "ders verebilecek", "aranmaktadır",
-            "özel ders arayışımız", "hocası lazım", "ilanı arıyorum"
+            "arıyorum", "arıyoruz", "aranıyor", "aranmaktadır", "lazım", "gerekiyor",
+            "tavsiye", "yardımcı olabilecek", "yardımcı olacak",
+            "hoca arıyoruz", "hoca arıyorum", "hoca arayışı", "hocası arıyoruz", "hocası arıyorum",
+            "öğretmen arıyoruz", "öğretmen arıyorum", "öğretmen arayışı", "öğretmeni arıyoruz",
+            "çocuğum için", "oğlum için", "kızım için", "kendim için", "yeğenim için",
+            "ders verebilecek", "ders verecek", "ders aldıracağız", "ders aldırmak", "ders almak",
+            "özel ders arayışımız", "özel ders arayışı", "hocası lazım", "öğretmen lazım",
+            "ilanı arıyorum", "antrenörü arıyoruz"
         ]
         
         for ad_kw in ad_keywords:
