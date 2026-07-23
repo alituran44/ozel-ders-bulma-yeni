@@ -63,7 +63,8 @@ class LeadClassifier:
             "hoca arıyoruz", "hoca arıyorum", "hoca arayışı", "hocası arıyoruz", "hocası arıyorum",
             "öğretmen arıyoruz", "öğretmen arıyorum", "öğretmen arayışı", "öğretmeni arıyoruz",
             "çocuğum için", "oğlum için", "kızım için", "kendim için", "yeğenim için",
-            "ders verebilecek", "ders verecek", "ders aldıracağız", "ders aldırmak", "ders almak",
+            "ders verebilecek", "ders verecek", "ders aldıracağız", "ders aldırmak", "ders almak", "dersi almak",
+            "almak istiyorum", "almak istiyoruz", "ders talebi", "ders talepleri", "ders istiyoruz", "ders istiyorum",
             "özel ders arayışımız", "özel ders arayışı", "hocası lazım", "öğretmen lazım",
             "ilanı arıyorum", "antrenörü arıyoruz"
         ]

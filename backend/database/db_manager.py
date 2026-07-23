@@ -125,7 +125,7 @@ def is_old_or_invalid_lead(content, url="", date_str=""):
         
     return False
 
-def is_duplicate_lead(content):
+def is_duplicate_lead(content, url=""):
     """Checks if the lead content is similar to recently saved leads to avoid duplicates."""
     from difflib import SequenceMatcher
     
@@ -135,7 +135,13 @@ def is_duplicate_lead(content):
     cursor = conn.cursor()
     
     try:
-        # Fetch the 50 most recent leads
+        # 1. Exact URL check if link exists
+        if url:
+            cursor.execute("SELECT id FROM leads WHERE original_link = ?", (url,))
+            if cursor.fetchone():
+                return True
+                
+        # 2. Fetch recent 50 leads for similarity check
         cursor.execute("SELECT content FROM leads ORDER BY created_at DESC LIMIT 50")
         recent_leads = cursor.fetchall()
     except Exception as e:
@@ -146,10 +152,12 @@ def is_duplicate_lead(content):
         
     for row in recent_leads:
         old_content_clean = str(row[0]).strip().lower()
-        
-        # Calculate similarity ratio
+        if new_content_clean == old_content_clean:
+            return True
+            
+        # Calculate similarity ratio (threshold set to 0.95 for template-heavy sites)
         ratio = SequenceMatcher(None, new_content_clean, old_content_clean).ratio()
-        if ratio > 0.85:
+        if ratio > 0.95:
             return True
             
     return False
@@ -164,9 +172,9 @@ def save_lead(lead_data):
         # Skip saving outdated or invalid leads
         return
         
-    if is_duplicate_lead(content):
+    if is_duplicate_lead(content, url):
         # Skip duplicate leads
-        print(f"   ℹ️ Yinelenen (Duplicate) ilan elendi (Benzerlik > 85%)")
+        print(f"   ℹ️ Yinelenen (Duplicate) ilan elendi (Benzerlik > 95%)")
         return
         
     conn = sqlite3.connect(DB_PATH)

@@ -77,7 +77,7 @@ class OzelDersAlaniScraper:
                             "content": content,
                             "subject": subject,
                             "location": location,
-                            "original_link": self.base_url,
+                            "original_link": f"{self.base_url}#{text_hash[:10]}",
                             "original_date": original_date,
                             "text_hash": text_hash,
                             "is_qualified": 1
